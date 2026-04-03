@@ -45,6 +45,7 @@ struct KeyboardShortcutsSheet: View {
                     }
 
                     shortcutGroup("Help") {
+                        shortcutRow("Command Palette", keys: "⇧⌘K")
                         shortcutRow("Keyboard Shortcuts", keys: "⌘/")
                     }
                 }

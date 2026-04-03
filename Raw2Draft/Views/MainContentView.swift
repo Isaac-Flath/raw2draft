@@ -72,6 +72,24 @@ struct MainContentView: View {
         .animation(.spring(response: Constants.springResponse, dampingFraction: Constants.springDamping), value: viewModel.sidebarVisible)
         .animation(.spring(response: Constants.springResponse, dampingFraction: Constants.springDamping), value: viewModel.distractionFreeMode)
         .animation(.spring(response: Constants.springResponse, dampingFraction: Constants.springDamping), value: viewModel.terminalVisible)
+        .overlay {
+            if viewModel.commandPaletteVisible {
+                ZStack {
+                    Color.black.opacity(0.25)
+                        .ignoresSafeArea()
+                        .onTapGesture { viewModel.commandPaletteVisible = false }
+
+                    VStack {
+                        CommandPaletteView(viewModel: viewModel)
+                            .frame(width: 500)
+                            .padding(.top, 80)
+                        Spacer()
+                    }
+                }
+                .transition(.opacity)
+                .animation(.easeOut(duration: 0.15), value: viewModel.commandPaletteVisible)
+            }
+        }
         .overlay(alignment: .bottom) {
             if let errorMessage = viewModel.errorMessage {
                 HStack(spacing: 8) {

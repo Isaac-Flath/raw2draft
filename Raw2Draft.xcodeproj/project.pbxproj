@@ -71,6 +71,8 @@
 		AA1111111111111111111111 /* Workspace.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2222222222222222222222 /* Workspace.swift */; };
 		BB1111111111111111111111 /* FileBrowserViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2222222222222222222222 /* FileBrowserViewModel.swift */; };
 		CC1111111111111111111111 /* FileBrowserSidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC2222222222222222222222 /* FileBrowserSidebarView.swift */; };
+		DD00CMDPAL00BLD01 /* CommandPaletteItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD00CMDPAL00REF01 /* CommandPaletteItem.swift */; };
+		DD00CMDPAL00BLD02 /* CommandPaletteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD00CMDPAL00REF02 /* CommandPaletteView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -148,6 +150,8 @@
 		FBC8942ADDFEC7CE112CFDD9 /* PathSanitizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathSanitizer.swift; sourceTree = "<group>"; };
 		AA00ERRHDL00REF01 /* ErrorHandling.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorHandling.swift; sourceTree = "<group>"; };
 		AA00URLEXT00REF01 /* URLExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLExtensions.swift; sourceTree = "<group>"; };
+		DD00CMDPAL00REF01 /* CommandPaletteItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandPaletteItem.swift; sourceTree = "<group>"; };
+		DD00CMDPAL00REF02 /* CommandPaletteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandPaletteView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -168,6 +172,7 @@
 		07C698497C78C1B732980A92 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				DD00CMDPAL00REF02 /* CommandPaletteView.swift */,
 				70323528E351A08A8C5200AB /* MainContentView.swift */,
 				714CF685EEDE06986FA5CFD2 /* Editor */,
 				2225DAA2244300625495DE01 /* Settings */,
@@ -213,6 +218,7 @@
 			isa = PBXGroup;
 			children = (
 				A380B72D1A14ECC761442683 /* BlogPost.swift */,
+				DD00CMDPAL00REF01 /* CommandPaletteItem.swift */,
 				475FFA7DE44E60F714E31971 /* KeychainKey.swift */,
 				A6956D253292B0036917F8B4 /* Project.swift */,
 				BA73A35F139D7A432F553199 /* ProjectFile.swift */,
@@ -536,6 +542,8 @@
 				AA1111111111111111111111 /* Workspace.swift in Sources */,
 				BB1111111111111111111111 /* FileBrowserViewModel.swift in Sources */,
 				CC1111111111111111111111 /* FileBrowserSidebarView.swift in Sources */,
+				DD00CMDPAL00BLD01 /* CommandPaletteItem.swift in Sources */,
+				DD00CMDPAL00BLD02 /* CommandPaletteView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

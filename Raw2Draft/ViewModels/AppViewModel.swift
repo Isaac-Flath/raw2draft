@@ -22,6 +22,7 @@ final class AppViewModel: ErrorHandling {
     var terminalVisible: Bool = true
     var settingsOpen: Bool = false
     var newProjectSheetOpen: Bool = false
+    var commandPaletteVisible: Bool = false
     var errorMessage: String?
     var postsRefreshCounter: Int = 0
 
