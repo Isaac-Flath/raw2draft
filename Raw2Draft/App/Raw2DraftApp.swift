@@ -114,14 +114,14 @@ struct Raw2DraftApp: App {
                 .keyboardShortcut("o", modifiers: [.command, .shift])
             }
 
-            CommandGroup(before: .help) {
+            CommandGroup(replacing: .help) {
                 Button("Command Palette") {
                     viewModel.commandPaletteVisible.toggle()
                 }
                 .keyboardShortcut("k", modifiers: [.command, .shift])
-            }
 
-            CommandGroup(replacing: .help) {
+                Divider()
+
                 Button("Keyboard Shortcuts") {
                     showShortcuts = true
                 }
