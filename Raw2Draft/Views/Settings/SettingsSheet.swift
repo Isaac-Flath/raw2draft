@@ -102,6 +102,21 @@ struct SettingsSheet: View {
                 }
             }
 
+            // Default Author
+            Divider()
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Default Author")
+                    .font(AppFonts.headline())
+
+                TextField("Author name for new posts", text: Binding(
+                    get: { UserDefaults.standard.string(forKey: UserDefaultsKey.defaultAuthor) ?? "" },
+                    set: { UserDefaults.standard.set($0, forKey: UserDefaultsKey.defaultAuthor) }
+                ))
+                .textFieldStyle(.roundedBorder)
+                .font(.system(size: 12))
+            }
+
             if viewModel.workspace.isContentStudio, let settingsVM = settingsViewModel {
                 Divider()
 

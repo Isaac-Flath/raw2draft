@@ -252,17 +252,12 @@ struct PostsBrowserView: View {
 
         do {
             try FileManager.default.createDirectory(at: dirURL, withIntermediateDirectories: true)
+            let author = UserDefaults.standard.string(forKey: UserDefaultsKey.defaultAuthor) ?? ""
             let template = """
             ---
             title: "\(name)"
-            description: ""
-            author: "Isaac Flath"
+            author: "\(author)"
             date: "\(dateString)"
-            categories: []
-            section: ""
-            subsection: ""
-            contentType: ""
-            image: ""
             draft: true
             ---
 

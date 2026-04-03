@@ -138,6 +138,7 @@ enum UserDefaultsKey {
     static let editorFontSize = "editorFontSize"
     static let projectsRoot = "projectsRoot"
 
+    static let defaultAuthor = "defaultAuthor"
     static let recentWorkspaces = "recentWorkspaces"
 
     static func lastFile(for projectId: String) -> String {

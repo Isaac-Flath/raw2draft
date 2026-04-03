@@ -356,18 +356,13 @@ final class EditorViewModel: ErrorHandling {
         }
 
         let title = name ?? ""
+        let author = UserDefaults.standard.string(forKey: UserDefaultsKey.defaultAuthor) ?? ""
         let projectLine = projectId.map { "project: \"\($0)\"" } ?? ""
         var frontmatterLines = [
             "---",
             "title: \"\(title)\"",
-            "description: \"\"",
-            "author: \"Isaac Flath\"",
+            "author: \"\(author)\"",
             "date: \"\(dateString)\"",
-            "categories: []",
-            "section: \"\"",
-            "subsection: \"\"",
-            "contentType: \"\"",
-            "image: \"\"",
             "draft: true",
         ]
         if !projectLine.isEmpty {
