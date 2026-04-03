@@ -1,19 +1,10 @@
 import SwiftUI
 
-/// Settings modal with .env-style key editor, font options, and cloud account.
+/// Settings modal with .env-style key editor and configuration.
 struct SettingsSheet: View {
     @Bindable var viewModel: AppViewModel
     @State private var settingsViewModel: SettingsViewModel?
     @Environment(\.dismiss) private var dismiss
-
-    private let fontOptions: [(name: String, label: String)] = [
-        ("Lora", "Lora"),
-        ("Inter", "Inter"),
-        ("Georgia", "Georgia"),
-        ("Palatino", "Palatino"),
-        (".AppleSystemUISerif", "New York (System Serif)"),
-        (".AppleSystemUIFont", "SF Pro (System Sans)"),
-    ]
 
     var body: some View {
         VStack(spacing: 16) {
@@ -65,41 +56,6 @@ struct SettingsSheet: View {
                 }
 
                 Divider()
-            }
-
-            // Editor Font
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Editor Font")
-                    .font(AppFonts.headline())
-
-                HStack(spacing: 16) {
-                    Picker("Font", selection: Binding(
-                        get: { viewModel.editorFontName },
-                        set: { viewModel.updateEditorFont(name: $0, size: viewModel.editorFontSize) }
-                    )) {
-                        ForEach(fontOptions, id: \.name) { option in
-                            Text(option.label).tag(option.name)
-                        }
-                    }
-                    .frame(width: 180)
-
-                    HStack(spacing: 4) {
-                        Text("Size:")
-                            .font(.system(size: 12))
-                        Stepper(
-                            value: Binding(
-                                get: { viewModel.editorFontSize },
-                                set: { viewModel.updateEditorFont(name: viewModel.editorFontName, size: $0) }
-                            ),
-                            in: 12...24,
-                            step: 1
-                        ) {
-                            Text("\(Int(viewModel.editorFontSize))")
-                                .font(.system(size: 12, design: .monospaced))
-                                .frame(width: 24)
-                        }
-                    }
-                }
             }
 
             // Default Author

@@ -34,11 +34,8 @@ final class AppViewModel: ErrorHandling {
     var pinnedProjectIds: Set<String> = []
 
     // Font settings
-    var editorFontName: String = UserDefaults.standard.string(forKey: UserDefaultsKey.editorFontName) ?? Constants.editorFontName
-    var editorFontSize: CGFloat = {
-        let stored = UserDefaults.standard.double(forKey: UserDefaultsKey.editorFontSize)
-        return stored > 0 ? stored : Constants.editorFontSize
-    }()
+    let editorFontName: String = Constants.editorFontName
+    let editorFontSize: CGFloat = Constants.editorFontSize
 
     // Rename/delete sheet state
     var renamingProject: Project?
@@ -255,14 +252,6 @@ final class AppViewModel: ErrorHandling {
         }
     }
 
-    // MARK: - Font Settings
-
-    func updateEditorFont(name: String, size: CGFloat) {
-        editorFontName = name
-        editorFontSize = size
-        UserDefaults.standard.set(name, forKey: UserDefaultsKey.editorFontName)
-        UserDefaults.standard.set(size, forKey: UserDefaultsKey.editorFontSize)
-    }
 
     // MARK: - Project Management
 

@@ -134,8 +134,6 @@ enum UserDefaultsKey {
     static let activeProjectId = "activeProjectId"
     static let terminalVisible = "terminalVisible"
     static let pinnedProjectIds = "pinnedProjectIds"
-    static let editorFontName = "editorFontName"
-    static let editorFontSize = "editorFontSize"
     static let projectsRoot = "projectsRoot"
 
     static let defaultAuthor = "defaultAuthor"
