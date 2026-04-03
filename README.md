@@ -48,7 +48,7 @@ draft --version # Show installed build number
 
 On first launch, configure your settings:
 - **Content root**: Set via Settings if using Content Studio mode (needs `posts/` and `projects/` directories)
-- **API keys**: Add to `.env` in your content root, or set as environment variables
+- **API keys**: Add via Settings, or edit `~/.raw2draft/.env` directly
 
 ## API keys
 

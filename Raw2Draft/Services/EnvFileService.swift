@@ -26,7 +26,7 @@ final class EnvFileService: EnvFileServiceProtocol {
     private var cache: [String: String] = [:]
     private let lock = NSLock()
 
-    init(envFileURL: URL = Constants.defaultContentPlatformRoot.appendingPathComponent(".env")) {
+    init(envFileURL: URL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".raw2draft/.env")) {
         self.envFileURL = envFileURL
         loadFromDisk()
     }
