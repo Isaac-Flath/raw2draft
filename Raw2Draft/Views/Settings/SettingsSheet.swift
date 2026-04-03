@@ -73,7 +73,7 @@ struct SettingsSheet: View {
                 .font(.system(size: 12))
             }
 
-            if viewModel.workspace.isContentStudio, let settingsVM = settingsViewModel {
+            if let settingsVM = settingsViewModel {
                 Divider()
 
                 // .env Editor
