@@ -1,0 +1,6 @@
+# Build artifacts that should not be bundled in the app
+node_modules/
+.venv/
+__pycache__/
+out/
+dist/

@@ -1,0 +1,6 @@
+[project]
+name = "video-resolve"
+version = "0.1.0"
+description = "DaVinci Resolve automation via Python scripting API"
+requires-python = ">=3.10"
+dependencies = []

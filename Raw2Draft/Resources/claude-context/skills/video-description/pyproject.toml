@@ -1,0 +1,6 @@
+[project]
+name = "video-description"
+version = "0.1.0"
+description = "Generate YouTube description, tags, and metadata"
+requires-python = ">=3.13"
+dependencies = []
