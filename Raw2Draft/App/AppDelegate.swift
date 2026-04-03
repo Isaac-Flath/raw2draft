@@ -22,8 +22,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        // Check for path from `draft` CLI
-        checkForDraftOpen()
+        // Don't check for draft CLI here — loadInitialState() handles it on first launch.
+        // Checking here would race and delete the file before the view hierarchy is ready.
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -36,7 +36,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             window.setFrameAutosaveName("Raw2DraftMainWindow")
         }
 
-        // Check for path from `draft` CLI (handles re-activation of running app)
+        // Check for path from `draft` CLI (handles re-activation of already-running app)
         checkForDraftOpen()
     }
 
