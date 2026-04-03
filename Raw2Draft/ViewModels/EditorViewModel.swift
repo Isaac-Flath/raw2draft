@@ -1,4 +1,7 @@
 import Foundation
+import os
+
+private let logger = Logger(subsystem: "com.raw2draft", category: "Editor")
 
 /// View model for the editor pane, managing file state, content editing, and tab grouping.
 @Observable @MainActor
@@ -197,7 +200,7 @@ final class EditorViewModel: ErrorHandling {
                 fileContent = newContent
             }
         } catch {
-            // Ignore read errors
+            logger.warning("Failed to reload file '\(event.path)': \(error.localizedDescription)")
         }
     }
 

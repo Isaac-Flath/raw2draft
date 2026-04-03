@@ -1,4 +1,7 @@
 import SwiftUI
+import os
+
+private let logger = Logger(subsystem: "com.raw2draft", category: "PostsBrowser")
 
 /// Browse all posts in posts/ with filtering and status indicators.
 /// Posts expand to show their directory contents for file navigation.
@@ -270,7 +273,7 @@ struct PostsBrowserView: View {
             reloadPosts()
             onOpenPost(blogFile)
         } catch {
-            // Errors handled silently for now
+            logger.error("Failed to create post directory '\(name)': \(error.localizedDescription)")
         }
     }
 
@@ -292,7 +295,9 @@ struct PostsBrowserView: View {
             // Start inline rename on the new file
             editingURL = fileURL
             editingName = filename
-        } catch {}
+        } catch {
+            logger.error("Failed to create file '\(filename)': \(error.localizedDescription)")
+        }
     }
 
     private func createFolderInline(in post: BlogPost) {
@@ -311,7 +316,9 @@ struct PostsBrowserView: View {
             loadFiles(for: post)
             editingURL = dirURL
             editingName = dirName
-        } catch {}
+        } catch {
+            logger.error("Failed to create folder '\(dirName)': \(error.localizedDescription)")
+        }
     }
 
     // MARK: - Rename
@@ -335,6 +342,7 @@ struct PostsBrowserView: View {
             onRenamed?(oldURL, newURL)
             reloadPosts()
         } catch {
+            logger.error("Failed to rename '\(oldURL.lastPathComponent)' to '\(trimmed)': \(error.localizedDescription)")
             editingURL = nil
         }
     }
@@ -371,7 +379,9 @@ struct PostsBrowserView: View {
             try FileManager.default.trashItem(at: url, resultingItemURL: nil)
             onDeletedURLs?(deletedURLs)
             reloadPosts()
-        } catch {}
+        } catch {
+            logger.error("Failed to trash '\(url.lastPathComponent)': \(error.localizedDescription)")
+        }
 
         pendingDeleteURL = nil
         showDeleteConfirmation = false

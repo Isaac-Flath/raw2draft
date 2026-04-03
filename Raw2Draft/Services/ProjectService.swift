@@ -1,5 +1,8 @@
 import Foundation
 import AppKit
+import os
+
+private let logger = Logger(subsystem: "com.raw2draft", category: "ProjectService")
 
 /// Protocol for project file system operations.
 protocol ProjectServiceProtocol {
@@ -42,7 +45,7 @@ final class ProjectService: ProjectServiceProtocol {
     func bootstrapSkillsIfNeeded() {
         let skillsDir = projectsDirectory.deletingLastPathComponent().appendingPathComponent(".claude/skills")
         if !fileManager.fileExists(atPath: skillsDir.path) {
-            NSLog("Warning: skills directory not found at \(skillsDir.path)")
+            logger.warning("Skills directory not found at \(skillsDir.path)")
         }
     }
 
