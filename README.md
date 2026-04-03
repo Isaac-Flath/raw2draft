@@ -24,7 +24,27 @@ cd raw2draft
 open Raw2Draft.xcodeproj
 ```
 
-Build and run from Xcode (Cmd+R).
+Build and run from Xcode (Cmd+R), or use [just](https://github.com/casey/just):
+
+```bash
+just build    # Compile (Release). Output goes to Xcode DerivedData.
+just install  # Copy app to /Applications and install the `draft` CLI.
+just test     # Run tests.
+```
+
+`just install` does three things:
+1. Copies the built app to `/Applications/Raw2Draft.app` (kills the running instance first)
+2. Installs the `draft` CLI to `~/.local/bin/draft`
+3. Requires `~/.local/bin` on your `PATH` for the CLI to work
+
+The `draft` CLI lets you open files and directories from any terminal:
+
+```bash
+draft           # Open current directory
+draft .         # Same as above
+draft file.md   # Open a specific file
+draft --version # Show installed build number
+```
 
 On first launch, configure your settings:
 - **Content root**: Set via Settings if using Content Studio mode (needs `posts/` and `projects/` directories)
