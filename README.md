@@ -1,6 +1,7 @@
 # Raw2Draft
 
-> **WARNING: This app runs Claude Code with `--dangerously-skip-permissions` (YOLO mode).** All AI-initiated actions — file writes, shell commands, etc. — are automatically approved without prompting. Use at your own risk and only with content you trust.
+> [!WARNING]
+> This app runs Claude Code with `--dangerously-skip-permissions` (YOLO mode). All AI-initiated actions — file writes, shell commands, etc. — are automatically approved without prompting. Use at your own risk and only with content you trust.
 
 Isaac Flath's personal writing tool.
 
