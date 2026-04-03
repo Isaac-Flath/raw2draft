@@ -5,7 +5,8 @@ struct CommandPaletteView: View {
     @Bindable var viewModel: AppViewModel
     @State private var query: String = ""
     @State private var selectedIndex: Int = 0
-    @State private var lastMouseLocation: CGPoint = .zero
+    @State private var usingKeyboard: Bool = false
+    @State private var mouseMonitor: Any?
     @FocusState private var searchFocused: Bool
 
     private let allItems = CommandPaletteProvider.allItems()
@@ -75,15 +76,9 @@ struct CommandPaletteView: View {
                                 .id(item.id)
                                 .contentShape(Rectangle())
                                 .onTapGesture { execute(item) }
-                                .onContinuousHover { phase in
-                                    if case .active(let location) = phase {
-                                        // Only update selection if the mouse actually moved,
-                                        // not from scroll-triggered hover changes
-                                        let distance = hypot(location.x - lastMouseLocation.x, location.y - lastMouseLocation.y)
-                                        if distance > 2 {
-                                            selectedIndex = globalIndex
-                                        }
-                                        lastMouseLocation = location
+                                .onHover { hovering in
+                                    if hovering && !usingKeyboard {
+                                        selectedIndex = globalIndex
                                     }
                                 }
                             }
@@ -109,12 +104,26 @@ struct CommandPaletteView: View {
         .background(.ultraThickMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .shadow(color: .black.opacity(0.2), radius: 20, y: 8)
-        .onAppear { searchFocused = true }
+        .onAppear {
+            searchFocused = true
+            mouseMonitor = NSEvent.addLocalMonitorForEvents(matching: .mouseMoved) { event in
+                usingKeyboard = false
+                return event
+            }
+        }
+        .onDisappear {
+            if let monitor = mouseMonitor {
+                NSEvent.removeMonitor(monitor)
+                mouseMonitor = nil
+            }
+        }
         .onKeyPress(.upArrow) {
+            usingKeyboard = true
             selectedIndex = max(0, selectedIndex - 1)
             return .handled
         }
         .onKeyPress(.downArrow) {
+            usingKeyboard = true
             selectedIndex = min(filteredItems.count - 1, selectedIndex + 1)
             return .handled
         }
