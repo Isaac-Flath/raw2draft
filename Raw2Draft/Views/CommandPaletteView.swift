@@ -239,7 +239,7 @@ private struct PaletteItemRow: View {
             Spacer()
 
             switch item.kind {
-            case .shortcut(let keys):
+            case .shortcut(let keys, _):
                 Text(keys)
                     .font(.system(size: 12, design: .monospaced))
                     .foregroundStyle(.secondary)
