@@ -1,0 +1,23 @@
+#!/bin/bash
+# draft - Open files and directories in Raw2Draft
+# Usage: draft [path]   Open a file or directory (defaults to current directory)
+#        draft .         Open current directory
+#        draft file.md   Open a specific file
+#        draft --version Show build version
+
+if [ "$1" = "--version" ]; then
+    defaults read /Applications/Raw2Draft.app/Contents/Info.plist CFBundleVersion 2>/dev/null || echo "Not installed"
+    exit 0
+fi
+
+path="${1:-.}"
+
+# Resolve to absolute path
+path="$(cd "$(dirname "$path")" 2>/dev/null && pwd)/$(basename "$path")"
+# Handle the case where path is a directory (remove trailing /.)
+path="${path%/.}"
+
+# Write the path for the app to pick up on launch
+echo "$path" > /tmp/raw2draft-open
+
+open -a Raw2Draft
