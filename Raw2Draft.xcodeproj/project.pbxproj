@@ -31,6 +31,7 @@
 		56CF0F08D809F5351A48C00F /* MainContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70323528E351A08A8C5200AB /* MainContentView.swift */; };
 		5B94B63A13045858D1B19770 /* FileWatcherService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40C165F71641888538DC76D2 /* FileWatcherService.swift */; };
 		5BC5624EAAC45262883BF1C2 /* Markdown in Frameworks */ = {isa = PBXBuildFile; productRef = 0848B5FFB9633A8997121442 /* Markdown */; };
+		YAMS0000000000BLD01 /* Yams in Frameworks */ = {isa = PBXBuildFile; productRef = YAMS0000000000REF01 /* Yams */; };
 		5EF7AECF5D1DDD9DE8753F28 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8C9E9282F79C4DCA0CC1FB18 /* Assets.xcassets */; };
 		AAAA000000000000000ICON1 /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = AAAA000000000000000ICON2 /* AppIcon.icns */; };
 		6A0DD70EB33A54580A00C64A /* APIKeyRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77E58812E3211C2E8431E836 /* APIKeyRowView.swift */; };
@@ -157,6 +158,7 @@
 				DD00GHOSTTY00BLD01 /* GhosttyTerminal in Frameworks */,
 				DD00GHOSTTY00BLD02 /* GhosttyKit in Frameworks */,
 				5BC5624EAAC45262883BF1C2 /* Markdown in Frameworks */,
+				YAMS0000000000BLD01 /* Yams in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -407,6 +409,7 @@
 				DD00GHOSTTY00REF01 /* GhosttyTerminal */,
 				DD00GHOSTTY00REF02 /* GhosttyKit */,
 				0848B5FFB9633A8997121442 /* Markdown */,
+				YAMS0000000000REF01 /* Yams */,
 			);
 			productName = Raw2Draft;
 			productReference = 7B06D884B9E76568B7D5582C /* Raw2Draft.app */;
@@ -439,6 +442,7 @@
 			packageReferences = (
 				DD00GHOSTTY00PKG01 /* XCRemoteSwiftPackageReference "libghostty-spm" */,
 				494497A4E6930FB915FB820D /* XCRemoteSwiftPackageReference "swift-markdown" */,
+				YAMS0000000000PKG01 /* XCRemoteSwiftPackageReference "Yams" */,
 			);
 			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
@@ -796,6 +800,14 @@
 				minimumVersion = 1.0.0;
 			};
 		};
+		YAMS0000000000PKG01 /* XCRemoteSwiftPackageReference "Yams" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/jpsim/Yams.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -813,6 +825,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = DD00GHOSTTY00PKG01 /* XCRemoteSwiftPackageReference "libghostty-spm" */;
 			productName = GhosttyKit;
+		};
+		YAMS0000000000REF01 /* Yams */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = YAMS0000000000PKG01 /* XCRemoteSwiftPackageReference "Yams" */;
+			productName = Yams;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

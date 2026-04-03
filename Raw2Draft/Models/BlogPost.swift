@@ -1,4 +1,5 @@
 import Foundation
+import Yams
 
 /// Post lifecycle status.
 enum PostStatus: String {
@@ -9,17 +10,13 @@ enum PostStatus: String {
 
 /// Represents a blog post parsed from posts/.
 struct BlogPost: Identifiable {
-    let id: String           // filename
+    let id: String           // directory name
     let filePath: URL
     let title: String
     let date: String
     let section: String
-    let subsection: String
     let isDraft: Bool
-    let project: String?     // linked project directory name
     let wordCount: Int
-    let lastModified: Date?  // file system modification date
-    let access: String       // "members" for extras posts, "" for regular
 
     var slug: String {
         var name = filePath.deletingLastPathComponent().lastPathComponent
@@ -78,7 +75,6 @@ enum BlogPostParser {
         guard let content = try? String(contentsOf: url, encoding: .utf8) else { return nil }
 
         let postId = url.deletingLastPathComponent().lastPathComponent
-        let lastModified = try? FileManager.default.attributesOfItem(atPath: url.path)[.modificationDate] as? Date
 
         let lines = content.components(separatedBy: .newlines)
         guard lines.first?.trimmingCharacters(in: .whitespaces) == "---" else {
@@ -88,12 +84,8 @@ enum BlogPostParser {
                 title: url.deletingPathExtension().lastPathComponent,
                 date: "",
                 section: "",
-                subsection: "",
                 isDraft: false,
-                project: nil,
-                wordCount: content.split(whereSeparator: \.isWhitespace).count,
-                lastModified: lastModified,
-                access: ""
+                wordCount: content.split(whereSeparator: \.isWhitespace).count
             )
         }
 
@@ -108,42 +100,30 @@ enum BlogPostParser {
 
         guard endIndex > 0 else { return nil }
 
-        let frontmatter = lines[1..<endIndex].joined(separator: "\n")
+        let frontmatterText = lines[1..<endIndex].joined(separator: "\n")
         let body = lines[(endIndex + 1)...].joined(separator: "\n")
 
-        func extractValue(_ key: String) -> String {
-            let pattern = #"(?m)^\s*"# + key + #"\s*:\s*"?([^"\n]*)"?\s*$"#
-            guard let range = frontmatter.range(of: pattern, options: .regularExpression) else { return "" }
-            let match = String(frontmatter[range])
-            // Extract value after colon
-            if let colonRange = match.range(of: ":") {
-                var value = String(match[colonRange.upperBound...]).trimmingCharacters(in: .whitespaces)
-                // Remove surrounding quotes
-                if value.hasPrefix("\"") && value.hasSuffix("\"") {
-                    value = String(value.dropFirst().dropLast())
-                }
-                return value
-            }
-            return ""
+        let yaml: [String: Any]
+        do {
+            yaml = try Yams.load(yaml: frontmatterText) as? [String: Any] ?? [:]
+        } catch {
+            yaml = [:]
         }
 
-        let draftValue = extractValue("draft").lowercased()
-        let isDraft = draftValue == "true"
+        func stringValue(_ key: String) -> String {
+            (yaml[key] as? String) ?? (yaml[key].map { "\($0)" } ?? "")
+        }
 
-        let projectValue = extractValue("project")
+        let draftValue = stringValue("draft").lowercased()
 
         return BlogPost(
             id: postId,
             filePath: url,
-            title: extractValue("title"),
-            date: extractValue("date"),
-            section: extractValue("section"),
-            subsection: extractValue("subsection"),
-            isDraft: isDraft,
-            project: projectValue.isEmpty ? nil : projectValue,
-            wordCount: body.split(whereSeparator: \.isWhitespace).count,
-            lastModified: lastModified,
-            access: extractValue("access")
+            title: stringValue("title"),
+            date: stringValue("date"),
+            section: stringValue("section"),
+            isDraft: draftValue == "true",
+            wordCount: body.split(whereSeparator: \.isWhitespace).count
         )
     }
 }
