@@ -10,11 +10,6 @@ Grab the latest DMG from [Releases](https://github.com/Isaac-Flath/raw2draft/rel
 
 > **Note:** This build is not code-signed or notarized. On first launch, right-click the app and select **Open** to bypass the macOS security prompt.
 
-### Requirements
-
-- macOS 14.0+
-- [Claude CLI](https://docs.anthropic.com/en/docs/claude-code) installed
-
 ### First launch
 
 - **Content root**: Set via Settings if using Content Studio mode (needs `posts/` and `projects/` directories)
@@ -22,9 +17,7 @@ Grab the latest DMG from [Releases](https://github.com/Isaac-Flath/raw2draft/rel
 
 ## Features
 
-### Core
-
-The bread and butter. These are well-tested and used daily.
+This is a personal tool that I build for myself. Some things are well-tested and used daily, some are experimental, and some are brand new and barely tested. It all ships together.  Use what works for you.
 
 - Split-pane markdown editor (CodeMirror 6) + Claude Code terminal
 - Content Studio mode for managing blog posts and content projects
@@ -32,23 +25,11 @@ The bread and butter. These are well-tested and used daily.
 - Customizable Claude skills and context deployed to `~/.raw2draft/context/`
 - Blog post browser with draft/published/scheduled status
 - Command palette (Shift+Cmd+K) for discovering shortcuts and skills
-
-### Experimental
-
-Features I'm actively trying out. They work but I'm still deciding how useful they are.
-
 - Drag-and-drop image upload to S3
 - Social media content generation and scheduling
 - Video editing skills (DaVinci Resolve integration)
-
-### New / Use at your own risk
-
-Brand new, mostly untested. There might be something interesting here but no promises.
-
 - Carousel rendering
-- Google Docs integration
-- YouTube integration
-- Fusion animations
+- Google Docs and YouTube integration
 
 ## API keys
 
