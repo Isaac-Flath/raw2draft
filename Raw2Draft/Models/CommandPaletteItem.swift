@@ -9,8 +9,8 @@ struct CommandPaletteItem: Identifiable {
     let category: String
 
     enum Kind {
-        case shortcut(keys: String)   // display-only, shows key combo
-        case skill(command: String)   // executable, sends slash command to terminal
+        case shortcut(keys: String, action: String)  // action ID to execute
+        case skill(command: String)                   // slash command sent to terminal
     }
 }
 
@@ -38,25 +38,35 @@ enum CommandPaletteProvider {
     // MARK: - Keyboard Shortcuts
 
     private static func shortcuts() -> [CommandPaletteItem] {
-        let file: [(String, String)] = [
-            ("New", "⌘N"), ("Open", "⌘O"), ("Save", "⌘S"), ("Settings", "⌘,"),
+        // (name, keys, action ID)
+        let file: [(String, String, String)] = [
+            ("New", "⌘N", "new"),
+            ("Open", "⌘O", "open"),
+            ("Save", "⌘S", "save"),
+            ("Settings", "⌘,", "settings"),
         ]
-        let view: [(String, String)] = [
-            ("Toggle Sidebar", "⇧⌘B"), ("Toggle Terminal", "⇧⌘T"),
-            ("Toggle Preview", "⇧⌘P"), ("Toggle Line Numbers", "⇧⌘L"),
-            ("Document Outline", "⇧⌘O"), ("Distraction-Free Mode", "⇧⌘F"),
-            ("Command Palette", "⇧⌘K"),
+        let view: [(String, String, String)] = [
+            ("Toggle Sidebar", "⇧⌘B", "toggleSidebar"),
+            ("Toggle Terminal", "⇧⌘T", "toggleTerminal"),
+            ("Toggle Preview", "⇧⌘P", "togglePreview"),
+            ("Toggle Line Numbers", "⇧⌘L", "toggleLineNumbers"),
+            ("Document Outline", "⇧⌘O", "toggleOutline"),
+            ("Distraction-Free Mode", "⇧⌘F", "toggleDistractionFree"),
         ]
-        let editor: [(String, String)] = [
-            ("Bold", "⌘B"), ("Italic", "⌘I"), ("Insert Link", "⌘K"),
-            ("Find", "⌘F"), ("Find Next", "⌘G"), ("Find Previous", "⇧⌘G"),
+        let editor: [(String, String, String)] = [
+            ("Bold", "⌘B", "bold"),
+            ("Italic", "⌘I", "italic"),
+            ("Insert Link", "⌘K", "insertLink"),
+            ("Find", "⌘F", "find"),
+            ("Find Next", "⌘G", "findNext"),
+            ("Find Previous", "⇧⌘G", "findPrevious"),
         ]
-        let help: [(String, String)] = [
-            ("Keyboard Shortcuts", "⌘/"),
+        let help: [(String, String, String)] = [
+            ("Command Palette", "⌘/", "commandPalette"),
         ]
 
-        func make(_ pairs: [(String, String)], category: String) -> [CommandPaletteItem] {
-            pairs.map { CommandPaletteItem(name: $0.0, subtitle: $0.1, kind: .shortcut(keys: $0.1), category: category) }
+        func make(_ triples: [(String, String, String)], category: String) -> [CommandPaletteItem] {
+            triples.map { CommandPaletteItem(name: $0.0, subtitle: $0.1, kind: .shortcut(keys: $0.1, action: $0.2), category: category) }
         }
 
         return make(file, category: "File") + make(view, category: "View")

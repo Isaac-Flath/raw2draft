@@ -35,7 +35,6 @@
 		5EF7AECF5D1DDD9DE8753F28 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8C9E9282F79C4DCA0CC1FB18 /* Assets.xcassets */; };
 		AAAA000000000000000ICON1 /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = AAAA000000000000000ICON2 /* AppIcon.icns */; };
 		6A0DD70EB33A54580A00C64A /* APIKeyRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77E58812E3211C2E8431E836 /* APIKeyRowView.swift */; };
-		CC00SHORTCUTS0BLD01 /* KeyboardShortcutsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC00SHORTCUTS0REF01 /* KeyboardShortcutsSheet.swift */; };
 		CC00DEPLOYER00BLD01 /* ClaudeContextDeployer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC00DEPLOYER00REF01 /* ClaudeContextDeployer.swift */; };
 		6B99ACCD279252A9623E9294 /* BlogPost.swift in Sources */ = {isa = PBXBuildFile; fileRef = A380B72D1A14ECC761442683 /* BlogPost.swift */; };
 		6FA8C5693257CB3F6AB735E4 /* TerminalViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3197D70AF1FF03ECF37E3DA1 /* TerminalViewModel.swift */; };
@@ -125,7 +124,6 @@
 		79E1A48B34D48249CC383B9D /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		7B06D884B9E76568B7D5582C /* Raw2Draft.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Raw2Draft.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8BB1D30809369E89B5DFC45C /* SettingsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsSheet.swift; sourceTree = "<group>"; };
-		CC00SHORTCUTS0REF01 /* KeyboardShortcutsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardShortcutsSheet.swift; sourceTree = "<group>"; };
 		8C9E9282F79C4DCA0CC1FB18 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9185AE90326AB7D92181C683 /* ProjectService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectService.swift; sourceTree = "<group>"; };
 		950D3A4F2336F52D80BE6719 /* ProjectSourcesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectSourcesView.swift; sourceTree = "<group>"; };
@@ -200,7 +198,6 @@
 			children = (
 				77E58812E3211C2E8431E836 /* APIKeyRowView.swift */,
 				8BB1D30809369E89B5DFC45C /* SettingsSheet.swift */,
-				CC00SHORTCUTS0REF01 /* KeyboardShortcutsSheet.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -492,7 +489,6 @@
 			files = (
 				FF00APPFONTS00BLD01 /* AppFonts.swift in Sources */,
 				6A0DD70EB33A54580A00C64A /* APIKeyRowView.swift in Sources */,
-				CC00SHORTCUTS0BLD01 /* KeyboardShortcutsSheet.swift in Sources */,
 				CC00DEPLOYER00BLD01 /* ClaudeContextDeployer.swift in Sources */,
 				0AD29DD2B803AA6D2869BB37 /* ActionBarView.swift in Sources */,
 				1353D8460749077BD356A72B /* AppDelegate.swift in Sources */,

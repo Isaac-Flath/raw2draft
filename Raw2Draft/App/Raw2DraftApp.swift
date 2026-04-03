@@ -8,17 +8,12 @@ struct Raw2DraftApp: App {
     @AppStorage("showPreview") private var showPreview = false
     @AppStorage("showOutline") private var showOutline = false
     @AppStorage("showLineNumbers") private var showLineNumbers = false
-    @State private var showShortcuts = false
-
     var body: some Scene {
         WindowGroup {
             MainContentView(viewModel: viewModel)
                 .frame(minWidth: 600, minHeight: 400)
                 .onOpenURL { url in
                     viewModel.openWorkspace(url: url)
-                }
-                .sheet(isPresented: $showShortcuts) {
-                    KeyboardShortcutsSheet(isPresented: $showShortcuts)
                 }
         }
         .windowStyle(.titleBar)
@@ -117,13 +112,6 @@ struct Raw2DraftApp: App {
             CommandGroup(replacing: .help) {
                 Button("Command Palette") {
                     viewModel.commandPaletteVisible.toggle()
-                }
-                .keyboardShortcut("k", modifiers: [.command, .shift])
-
-                Divider()
-
-                Button("Keyboard Shortcuts") {
-                    showShortcuts = true
                 }
                 .keyboardShortcut("/", modifiers: .command)
             }

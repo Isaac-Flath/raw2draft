@@ -5,8 +5,7 @@ struct CommandPaletteView: View {
     @Bindable var viewModel: AppViewModel
     @State private var query: String = ""
     @State private var selectedIndex: Int = 0
-    @State private var usingKeyboard: Bool = false
-    @State private var mouseMonitor: Any?
+    @State private var scrollToSelection: Bool = false
     @FocusState private var searchFocused: Bool
 
     private let allItems = CommandPaletteProvider.allItems()
@@ -77,9 +76,7 @@ struct CommandPaletteView: View {
                                 .contentShape(Rectangle())
                                 .onTapGesture { execute(item) }
                                 .onHover { hovering in
-                                    if hovering && !usingKeyboard {
-                                        selectedIndex = globalIndex
-                                    }
+                                    if hovering { selectedIndex = globalIndex }
                                 }
                             }
                         }
@@ -94,37 +91,26 @@ struct CommandPaletteView: View {
                     }
                 }
                 .frame(maxHeight: 340)
-                .onChange(of: selectedIndex) {
-                    if let item = filteredItems[safe: selectedIndex] {
+                .onChange(of: scrollToSelection) {
+                    if scrollToSelection, let item = filteredItems[safe: selectedIndex] {
                         proxy.scrollTo(item.id, anchor: .center)
                     }
+                    scrollToSelection = false
                 }
             }
         }
         .background(.ultraThickMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .shadow(color: .black.opacity(0.2), radius: 20, y: 8)
-        .onAppear {
-            searchFocused = true
-            mouseMonitor = NSEvent.addLocalMonitorForEvents(matching: .mouseMoved) { event in
-                usingKeyboard = false
-                return event
-            }
-        }
-        .onDisappear {
-            if let monitor = mouseMonitor {
-                NSEvent.removeMonitor(monitor)
-                mouseMonitor = nil
-            }
-        }
+        .onAppear { searchFocused = true }
         .onKeyPress(.upArrow) {
-            usingKeyboard = true
             selectedIndex = max(0, selectedIndex - 1)
+            scrollToSelection = true
             return .handled
         }
         .onKeyPress(.downArrow) {
-            usingKeyboard = true
             selectedIndex = min(filteredItems.count - 1, selectedIndex + 1)
+            scrollToSelection = true
             return .handled
         }
         .onKeyPress(.return) {
@@ -140,16 +126,84 @@ struct CommandPaletteView: View {
     }
 
     private func execute(_ item: CommandPaletteItem) {
+        viewModel.commandPaletteVisible = false
+
         switch item.kind {
-        case .shortcut:
-            break
+        case .shortcut(_, let action):
+            executeShortcut(action)
         case .skill(let command):
             if !viewModel.terminalVisible {
                 viewModel.terminalVisible = true
             }
             viewModel.sendTerminalCommand(command)
         }
-        viewModel.commandPaletteVisible = false
+    }
+
+    private func executeShortcut(_ action: String) {
+        let defaults = UserDefaults.standard
+        let anim = Animation.spring(response: Constants.springResponse, dampingFraction: Constants.springDamping)
+
+        switch action {
+        // File
+        case "new":
+            if viewModel.workspace.isContentStudio {
+                viewModel.newProjectSheetOpen = true
+            } else if let url = viewModel.fileBrowser?.createNewFile() {
+                viewModel.editor.openExternalFile(url: url, additive: true)
+            }
+        case "save":
+            viewModel.editor.saveCurrentFile()
+        case "settings":
+            viewModel.settingsOpen = true
+
+        // View
+        case "toggleSidebar":
+            withAnimation(anim) { viewModel.toggleSidebar() }
+        case "toggleTerminal":
+            withAnimation(anim) { viewModel.toggleTerminal() }
+        case "togglePreview":
+            defaults.set(!defaults.bool(forKey: "showPreview"), forKey: "showPreview")
+        case "toggleLineNumbers":
+            defaults.set(!defaults.bool(forKey: "showLineNumbers"), forKey: "showLineNumbers")
+        case "toggleOutline":
+            defaults.set(!defaults.bool(forKey: "showOutline"), forKey: "showOutline")
+        case "toggleDistractionFree":
+            withAnimation(anim) { viewModel.toggleDistractionFree() }
+
+        // Editor — send key equivalent to the editor webview
+        case "bold":
+            sendEditorKey("b", modifiers: .command)
+        case "italic":
+            sendEditorKey("i", modifiers: .command)
+        case "insertLink":
+            sendEditorKey("k", modifiers: .command)
+        case "find":
+            sendEditorKey("f", modifiers: .command)
+        case "findNext":
+            sendEditorKey("g", modifiers: .command)
+        case "findPrevious":
+            sendEditorKey("g", modifiers: [.command, .shift])
+
+        default:
+            break
+        }
+    }
+
+    /// Synthesize a key event and send it through the menu system.
+    private func sendEditorKey(_ key: String, modifiers: NSEvent.ModifierFlags) {
+        guard let event = NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: modifiers,
+            timestamp: ProcessInfo.processInfo.systemUptime,
+            windowNumber: NSApp.mainWindow?.windowNumber ?? 0,
+            context: nil,
+            characters: key,
+            charactersIgnoringModifiers: key,
+            isARepeat: false,
+            keyCode: 0
+        ) else { return }
+        NSApp.mainMenu?.performKeyEquivalent(with: event)
     }
 }
 
