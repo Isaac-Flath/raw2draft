@@ -30,21 +30,34 @@ jobs:
             -derivedDataPath build \
             build
 
-      - name: Package app
+      - name: Create DMG
         run: |
-          cd build/Build/Products/Release
-          zip -r -y Raw2Draft.app.zip Raw2Draft.app
+          APP_PATH="build/Build/Products/Release/Raw2Draft.app"
+          DMG_NAME="Raw2Draft-${GITHUB_REF_NAME}.dmg"
+
+          # Create a temporary directory for the DMG contents
+          mkdir -p dmg-staging
+          cp -R "$APP_PATH" dmg-staging/
+          ln -s /Applications dmg-staging/Applications
+
+          # Create the DMG
+          hdiutil create -volname "Raw2Draft" \
+            -srcfolder dmg-staging \
+            -ov -format UDZO \
+            "$DMG_NAME"
+
+          echo "DMG_NAME=$DMG_NAME" >> "$GITHUB_ENV"
 
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          files: build/Build/Products/Release/Raw2Draft.app.zip
+          files: ${{ env.DMG_NAME }}
           generate_release_notes: true
           body: |
             ## Installation
 
-            1. Download `Raw2Draft.app.zip` below
-            2. Unzip and move `Raw2Draft.app` to `/Applications`
+            1. Download the DMG below
+            2. Open it and drag **Raw2Draft** to the **Applications** folder
             3. On first launch, right-click the app and select **Open** (required for unsigned apps)
 
             ### Requirements
