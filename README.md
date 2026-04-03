@@ -102,6 +102,10 @@ You can include any additional frontmatter fields your blog needs (e.g., `descri
 
 A post with a `date` in the future and `draft: false` is shown as "scheduled" (indigo indicator). Otherwise it's "published" (green).
 
+## How Claude Code integration works
+
+There is no special Claude Code integration. The app runs a terminal and launches the Claude Code harness with no modifications. It uses [agent skills](https://docs.anthropic.com/en/docs/claude-code/skills) to give it additional behavior.
+
 ## Customizing prompts and skills
 
 On first launch, bundled context is deployed to `~/.raw2draft/context/`. This includes a CLAUDE.md, skills, and reference documents. Edit these files to customize behavior — the app won't overwrite your changes on subsequent launches.

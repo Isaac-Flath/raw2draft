@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer
+
+      - name: Resolve packages
+        run: xcodebuild -project Raw2Draft.xcodeproj -scheme Raw2Draft -configuration Release -resolvePackageDependencies
+
+      - name: Build
+        run: |
+          BUILD_NUM=$(date +%Y%m%d%H%M%S)
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUM" Raw2Draft/Resources/Info.plist
+          xcodebuild -project Raw2Draft.xcodeproj \
+            -scheme Raw2Draft \
+            -configuration Release \
+            -derivedDataPath build \
+            build
+
+      - name: Package app
+        run: |
+          cd build/Build/Products/Release
+          zip -r -y Raw2Draft.app.zip Raw2Draft.app
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/Build/Products/Release/Raw2Draft.app.zip
+          generate_release_notes: true
+          body: |
+            ## Installation
+
+            1. Download `Raw2Draft.app.zip` below
+            2. Unzip and move `Raw2Draft.app` to `/Applications`
+            3. On first launch, right-click the app and select **Open** (required for unsigned apps)
+
+            ### Requirements
+            - macOS 14.0+
+            - [Claude CLI](https://claude.ai/download) installed
+
+            > **Note:** This build is not code-signed or notarized. macOS will show a security prompt on first launch — use right-click > Open to bypass it.
