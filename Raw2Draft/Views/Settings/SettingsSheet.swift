@@ -91,7 +91,7 @@ struct SettingsSheet: View {
                 Text("by")
                     .font(.system(size: 11))
                     .foregroundStyle(.tertiary)
-                Link("Isaac Flath", destination: URL(string: "https://isaac-flath.github.io/")!)
+                Link("Isaac Flath", destination: URL(string: "https://isaacflath.com")!)
                     .font(.system(size: 11, weight: .medium))
                 Spacer()
                 Link("GitHub", destination: URL(string: "https://github.com/Isaac-Flath/raw2draft")!)

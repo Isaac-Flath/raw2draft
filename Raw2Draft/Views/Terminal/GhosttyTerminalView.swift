@@ -90,6 +90,14 @@ struct GhosttyTerminalView: NSViewRepresentable {
                 // Only intercept when the terminal view is first responder
                 guard terminalView.window?.firstResponder === terminalView else { return event }
 
+                // Let ⌘-modified keys reach the menu system instead of Ghostty
+                if event.modifierFlags.contains(.command) {
+                    DispatchQueue.main.async {
+                        NSApp.mainMenu?.performKeyEquivalent(with: event)
+                    }
+                    return nil
+                }
+
                 let keyCode = event.keyCode
                 // Return = 36, Enter (numpad) = 76
                 if keyCode == 36 || keyCode == 76 {
