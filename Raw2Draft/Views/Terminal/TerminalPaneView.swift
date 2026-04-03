@@ -56,7 +56,9 @@ struct TerminalPaneView: View {
             }
 
             // Terminal view
-            if let key = terminalKey {
+            if !termVM.isClaudeInstalled {
+                claudeNotInstalledView
+            } else if let key = terminalKey {
                 GhosttyTerminalView(
                     projectId: key,
                     terminalViewModel: termVM
@@ -74,5 +76,54 @@ struct TerminalPaneView: View {
             }
         }
         .background(SwiftUI.Color(hex: Constants.TerminalColors.background))
+    }
+
+    // MARK: - Claude Not Installed
+
+    private var claudeNotInstalledView: some View {
+        VStack(spacing: 16) {
+            Spacer()
+
+            Image(systemName: "terminal")
+                .font(.system(size: 40))
+                .foregroundStyle(.secondary)
+
+            Text("Claude CLI Not Found")
+                .font(.headline)
+
+            Text("Raw2Draft uses the Claude CLI for its integrated terminal.\nInstall it to get started:")
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.secondary)
+                .font(.subheadline)
+
+            VStack(alignment: .leading, spacing: 8) {
+                instructionRow("1", "Install Claude CLI from https://claude.ai/download")
+                instructionRow("2", "Verify it works by running  claude --version  in Terminal")
+                instructionRow("3", "Restart Raw2Draft")
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(.background)
+            )
+
+            Text("Looked in: ~/.local/bin, /usr/local/bin, /opt/homebrew/bin")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(SwiftUI.Color(hex: Constants.TerminalColors.background))
+    }
+
+    private func instructionRow(_ number: String, _ text: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text(number + ".")
+                .fontWeight(.semibold)
+                .monospacedDigit()
+            Text(text)
+        }
+        .font(.subheadline)
     }
 }

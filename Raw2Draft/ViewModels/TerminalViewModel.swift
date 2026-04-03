@@ -81,6 +81,11 @@ final class TerminalViewModel {
         }
     }
 
+    /// Whether Claude CLI is available on this system.
+    var isClaudeInstalled: Bool {
+        terminalService.isClaudeInstalled()
+    }
+
     /// Working directory for terminal processes.
     var workingDirectory: URL = Constants.defaultContentPlatformRoot
 

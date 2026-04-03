@@ -10,6 +10,7 @@ struct TerminalProcessParams {
 
 /// Protocol for terminal session management.
 protocol TerminalServiceProtocol {
+    func isClaudeInstalled() -> Bool
     func resolveClaudeBin() -> String
     func buildEnvironment(envFileService: EnvFileServiceProtocol) -> [String: String]
     func processParams(projectId: String, envFileService: EnvFileServiceProtocol, workingDirectory: URL) -> TerminalProcessParams
@@ -18,6 +19,10 @@ protocol TerminalServiceProtocol {
 /// Resolves the Claude binary and builds process launch parameters.
 final class TerminalService: TerminalServiceProtocol {
     private let fileManager = FileManager.default
+
+    func isClaudeInstalled() -> Bool {
+        Constants.claudeSearchPaths.contains { fileManager.fileExists(atPath: $0) }
+    }
 
     func resolveClaudeBin() -> String {
         for path in Constants.claudeSearchPaths {
