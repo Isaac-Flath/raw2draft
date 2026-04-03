@@ -81,6 +81,23 @@ struct SettingsSheet: View {
             }
 
             Spacer()
+
+            // About
+            Divider()
+            HStack {
+                Text("Raw2Draft")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.secondary)
+                Text("by")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.tertiary)
+                Link("Isaac Flath", destination: URL(string: "https://isaac-flath.github.io/")!)
+                    .font(.system(size: 11, weight: .medium))
+                Spacer()
+                Link("GitHub", destination: URL(string: "https://github.com/Isaac-Flath/raw2draft")!)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+            }
         }
         .padding(24)
         .frame(width: 560, height: 720)

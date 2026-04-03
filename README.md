@@ -1,6 +1,6 @@
 # Raw2Draft
 
-Markdown editor with an integrated Claude CLI terminal for macOS. Personal tool, open sourced for others to use.
+Isaac Flath's personal writing tool.
 
 ## What it does
 
