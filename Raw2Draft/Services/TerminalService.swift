@@ -11,8 +11,8 @@ struct TerminalProcessParams {
 /// Protocol for terminal session management.
 protocol TerminalServiceProtocol {
     func resolveClaudeBin() -> String
-    func buildEnvironment(keychainService: KeychainServiceProtocol) -> [String: String]
-    func processParams(projectId: String, keychainService: KeychainServiceProtocol, workingDirectory: URL) -> TerminalProcessParams
+    func buildEnvironment(envFileService: EnvFileServiceProtocol) -> [String: String]
+    func processParams(projectId: String, envFileService: EnvFileServiceProtocol, workingDirectory: URL) -> TerminalProcessParams
 }
 
 /// Resolves the Claude binary and builds process launch parameters.
@@ -28,7 +28,7 @@ final class TerminalService: TerminalServiceProtocol {
         return "claude"
     }
 
-    func buildEnvironment(keychainService: KeychainServiceProtocol) -> [String: String] {
+    func buildEnvironment(envFileService: EnvFileServiceProtocol) -> [String: String] {
         var env = ProcessInfo.processInfo.environment
 
         // Remove Claude Code nesting guard so the app can launch claude as a child
@@ -43,14 +43,14 @@ final class TerminalService: TerminalServiceProtocol {
         let newPaths = extraPaths.filter { fileManager.fileExists(atPath: $0) }
         env["PATH"] = (newPaths + [existingPath]).joined(separator: ":")
 
-        keychainService.hydrateEnvironment(&env)
+        envFileService.hydrateEnvironment(&env)
 
         return env
     }
 
-    func processParams(projectId: String, keychainService: KeychainServiceProtocol, workingDirectory: URL) -> TerminalProcessParams {
+    func processParams(projectId: String, envFileService: EnvFileServiceProtocol, workingDirectory: URL) -> TerminalProcessParams {
         let claudeBin = resolveClaudeBin()
-        var env = buildEnvironment(keychainService: keychainService)
+        var env = buildEnvironment(envFileService: envFileService)
 
         // Terminal type — required for TUI apps like Claude Code
         env["TERM"] = "xterm-256color"

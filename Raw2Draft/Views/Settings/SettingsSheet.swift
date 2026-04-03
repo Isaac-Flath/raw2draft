@@ -115,7 +115,7 @@ struct SettingsSheet: View {
         .frame(width: 560, height: 720)
         .onAppear {
             let vm = SettingsViewModel(
-                keychainService: viewModel.keychainService
+                envFileService: viewModel.envFileService
             )
             settingsViewModel = vm
             vm.loadStatuses()

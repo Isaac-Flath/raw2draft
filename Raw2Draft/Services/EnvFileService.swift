@@ -1,7 +1,7 @@
 import Foundation
 
-/// Protocol for key-value storage of API keys and config.
-protocol KeychainServiceProtocol {
+/// Protocol for key-value storage of API keys and config via .env files.
+protocol EnvFileServiceProtocol {
     func getKey(_ key: KeychainKey) -> String?
     func setKey(_ key: KeychainKey, value: String) throws
     func deleteKey(_ key: KeychainKey) throws
@@ -19,7 +19,7 @@ protocol KeychainServiceProtocol {
 }
 
 /// Reads and writes API keys from a `.env` file at ~/Documents/Raw2Draft/.env.
-final class KeychainService: KeychainServiceProtocol {
+final class EnvFileService: EnvFileServiceProtocol {
     let envFileURL: URL
 
     /// In-memory cache of parsed key-value pairs.
@@ -157,7 +157,7 @@ final class KeychainService: KeychainServiceProtocol {
 
 // MARK: - Errors
 
-enum KeychainError: LocalizedError {
+enum EnvFileError: LocalizedError {
     case unableToStore(status: OSStatus)
     case unableToDelete(status: OSStatus)
 

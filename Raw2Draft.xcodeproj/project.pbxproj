@@ -57,7 +57,7 @@
 		B8D22F9F1A99EC95656A120C /* PostsBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05D5A6EBDDE527888055219B /* PostsBrowserView.swift */; };
 		BDA17D747E4589BE2CA014F9 /* SourcesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF06309F2C8C296765BC02A4 /* SourcesViewModel.swift */; };
 		C1B2FBBB7CBDFAB8DFEF85A2 /* MarkdownParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 357D939EFB00E7A552B20709 /* MarkdownParser.swift */; };
-		C801153F8E3DA335C91EB55A /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9925779F4A35344ACC88FD01 /* KeychainService.swift */; };
+		C801153F8E3DA335C91EB55A /* EnvFileService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9925779F4A35344ACC88FD01 /* EnvFileService.swift */; };
 		CA49D7C1C0EB6E3FAA0CEB6A /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0626747A192939C027751861 /* SettingsViewModel.swift */; };
 		CCAC85196C58AA6CE78B4A72 /* ColorExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5973AD8C0ACADA01ADC1D680 /* ColorExtension.swift */; };
 		CCCDC45C762B2AD2D32D801D /* KeychainServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47687442FD7043BA0F3F9B31 /* KeychainServiceTests.swift */; };
@@ -126,7 +126,7 @@
 		8C9E9282F79C4DCA0CC1FB18 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9185AE90326AB7D92181C683 /* ProjectService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectService.swift; sourceTree = "<group>"; };
 		950D3A4F2336F52D80BE6719 /* ProjectSourcesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectSourcesView.swift; sourceTree = "<group>"; };
-		9925779F4A35344ACC88FD01 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
+		9925779F4A35344ACC88FD01 /* EnvFileService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnvFileService.swift; sourceTree = "<group>"; };
 		9BB02B981C3E911E8F4E85ED /* ProjectServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectServiceTests.swift; sourceTree = "<group>"; };
 		A37361D49DEE7E7EAEC55FAF /* TerminalPaneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalPaneView.swift; sourceTree = "<group>"; };
 		A380B72D1A14ECC761442683 /* BlogPost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogPost.swift; sourceTree = "<group>"; };
@@ -283,7 +283,7 @@
 			isa = PBXGroup;
 			children = (
 				40C165F71641888538DC76D2 /* FileWatcherService.swift */,
-				9925779F4A35344ACC88FD01 /* KeychainService.swift */,
+				9925779F4A35344ACC88FD01 /* EnvFileService.swift */,
 				9185AE90326AB7D92181C683 /* ProjectService.swift */,
 				DD00TERMPROC0REF01 /* TerminalProcess.swift */,
 				254CB3107A295A59DC7D7215 /* TerminalService.swift */,
@@ -498,7 +498,7 @@
 				20CD6670993438B3E97E9C96 /* HeadingOutlinePopover.swift in Sources */,
 				7C7BB7CAF42CBFCFEBD1894C /* ImagePreviewView.swift in Sources */,
 				498EC18896567CC6D3177EC1 /* KeychainKey.swift in Sources */,
-				C801153F8E3DA335C91EB55A /* KeychainService.swift in Sources */,
+				C801153F8E3DA335C91EB55A /* EnvFileService.swift in Sources */,
 				56CF0F08D809F5351A48C00F /* MainContentView.swift in Sources */,
 				A28C6F12679DA0652F142A68 /* MarkdownEditorWebView.swift in Sources */,
 				C1B2FBBB7CBDFAB8DFEF85A2 /* MarkdownParser.swift in Sources */,

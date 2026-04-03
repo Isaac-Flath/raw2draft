@@ -57,7 +57,7 @@ final class AppViewModel: ErrorHandling {
 
     // MARK: - Services
     let projectService: any ProjectServiceProtocol
-    let keychainService: any KeychainServiceProtocol
+    let envFileService: any EnvFileServiceProtocol
     let terminalService: any TerminalServiceProtocol
     let fileWatcherService: any FileWatcherServiceProtocol
     // MARK: - Private
@@ -65,16 +65,16 @@ final class AppViewModel: ErrorHandling {
 
     init(
         projectService: any ProjectServiceProtocol = ProjectService(),
-        keychainService: any KeychainServiceProtocol = KeychainService(),
+        envFileService: any EnvFileServiceProtocol = EnvFileService(),
         terminalService: any TerminalServiceProtocol = TerminalService(),
         fileWatcherService: any FileWatcherServiceProtocol = FileWatcherService()
     ) {
         self.projectService = projectService
-        self.keychainService = keychainService
+        self.envFileService = envFileService
         self.terminalService = terminalService
         self.fileWatcherService = fileWatcherService
         self.editor = EditorViewModel(projectService: projectService)
-        self.terminal = TerminalViewModel(terminalService: terminalService, keychainService: keychainService)
+        self.terminal = TerminalViewModel(terminalService: terminalService, envFileService: envFileService)
 
         setupFileWatcher()
     }

@@ -85,11 +85,11 @@ final class TerminalViewModel {
     var workingDirectory: URL = Constants.defaultContentPlatformRoot
 
     private let terminalService: any TerminalServiceProtocol
-    private let keychainService: any KeychainServiceProtocol
+    private let envFileService: any EnvFileServiceProtocol
 
-    init(terminalService: any TerminalServiceProtocol, keychainService: any KeychainServiceProtocol) {
+    init(terminalService: any TerminalServiceProtocol, envFileService: any EnvFileServiceProtocol) {
         self.terminalService = terminalService
-        self.keychainService = keychainService
+        self.envFileService = envFileService
         self.controller = buildController()
     }
 
@@ -177,7 +177,7 @@ final class TerminalViewModel {
     }
 
     func processParams(projectId: String) -> TerminalProcessParams {
-        terminalService.processParams(projectId: projectId, keychainService: keychainService, workingDirectory: workingDirectory)
+        terminalService.processParams(projectId: projectId, envFileService: envFileService, workingDirectory: workingDirectory)
     }
 
     /// Send a command string to the running terminal as if the user typed it.

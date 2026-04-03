@@ -99,9 +99,6 @@ enum Constants {
     static let imageExtensions: Set<String> = ["png", "jpg", "jpeg", "gif", "webp"]
     static let markdownExtensions: Set<String> = ["md", "mdx", "markdown"]
 
-    // MARK: - Keychain
-    static let keychainServiceName = "Raw2Draft"
-
     // MARK: - URL Scheme
     static let urlScheme = "raw2draft"
 

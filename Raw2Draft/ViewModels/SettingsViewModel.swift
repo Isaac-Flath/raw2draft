@@ -8,23 +8,23 @@ final class SettingsViewModel: ErrorHandling {
     var saveConfirmation: String?
     var envFilePath: String = ""
 
-    private let keychainService: any KeychainServiceProtocol
+    private let envFileService: any EnvFileServiceProtocol
 
-    init(keychainService: any KeychainServiceProtocol) {
-        self.keychainService = keychainService
-        self.envFilePath = keychainService.envFileURL.path
+    init(envFileService: any EnvFileServiceProtocol) {
+        self.envFileService = envFileService
+        self.envFilePath = envFileService.envFileURL.path
     }
 
     func loadStatuses() {
-        envText = keychainService.readEnvFile()
+        envText = envFileService.readEnvFile()
     }
 
     func saveEnvText() {
         do {
-            try keychainService.writeEnvFile(envText)
+            try envFileService.writeEnvFile(envText)
             saveConfirmation = "Saved"
             // Reload to reflect actual state
-            envText = keychainService.readEnvFile()
+            envText = envFileService.readEnvFile()
         } catch {
             showError(error.localizedDescription)
         }
