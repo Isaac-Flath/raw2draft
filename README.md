@@ -98,21 +98,6 @@ On first launch, bundled context is deployed to `~/.raw2draft/context/`. This in
 
 To reset to defaults, delete `~/.raw2draft/context/` and relaunch.
 
-### Skill format
-
-Each skill lives in `.claude/skills/<name>/SKILL.md` with frontmatter:
-
-```markdown
----
-name: my-skill
-description: /my-skill - What it does
----
-
-# /my-skill - What it does
-
-Instructions for Claude...
-```
-
 ## Building from source
 
 ```bash
