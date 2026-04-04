@@ -29,11 +29,6 @@ enum WorkspaceMode: Equatable {
 
     // MARK: - Content Studio Paths (only meaningful in .contentStudio)
 
-    var projectsDirectory: URL? {
-        guard case .contentStudio(let root) = self else { return nil }
-        return root.appendingPathComponent("projects")
-    }
-
     var postsDirectory: URL? {
         guard case .contentStudio(let root) = self else { return nil }
         return root.appendingPathComponent("posts")
@@ -72,22 +67,20 @@ enum WorkspaceMode: Equatable {
             // It's a file — open its parent directory with this file pre-selected
             let parentDir = url.deletingLastPathComponent()
 
-            // Check if parent is a content root (has posts/ and projects/ directories)
+            // Check if parent is a content root (has posts/ directory)
             let hasPosts = fm.fileExists(atPath: parentDir.appendingPathComponent("posts").path)
-            let hasProjects = fm.fileExists(atPath: parentDir.appendingPathComponent("projects").path)
 
-            if hasPosts && hasProjects {
+            if hasPosts {
                 return DetectionResult(mode: .contentStudio(parentDir), initialFile: url)
             }
 
             return DetectionResult(mode: .directory(parentDir), initialFile: url)
         }
 
-        // It's a directory — detect content studio if it has posts/ and projects/
+        // It's a directory — detect content studio if it has posts/
         let hasPosts = fm.fileExists(atPath: url.appendingPathComponent("posts").path)
-        let hasProjects = fm.fileExists(atPath: url.appendingPathComponent("projects").path)
 
-        if hasPosts && hasProjects {
+        if hasPosts {
             return DetectionResult(mode: .contentStudio(url), initialFile: nil)
         }
 

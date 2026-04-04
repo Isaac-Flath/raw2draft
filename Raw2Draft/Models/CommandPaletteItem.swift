@@ -62,7 +62,7 @@ enum CommandPaletteProvider {
             ("Find Previous", "⇧⌘G", "findPrevious"),
         ]
         let help: [(String, String, String)] = [
-            ("Command Palette", "⌘/", "commandPalette"),
+            ("Command Palette", "⌘P", "commandPalette"),
         ]
 
         func make(_ triples: [(String, String, String)], category: String) -> [CommandPaletteItem] {

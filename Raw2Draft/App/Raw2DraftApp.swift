@@ -113,7 +113,7 @@ struct Raw2DraftApp: App {
                 Button("Command Palette") {
                     viewModel.commandPaletteVisible.toggle()
                 }
-                .keyboardShortcut("/", modifiers: .command)
+                .keyboardShortcut("p", modifiers: .command)
             }
         }
     }
