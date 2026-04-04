@@ -32,6 +32,23 @@ install:
     echo "Installed to /Applications/Raw2Draft.app"
     echo "CLI installed to ~/.local/bin/draft"
 
+# Reset deployed context (moves to Trash, relaunch app to get fresh skills)
+reset-context:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    CONTEXT="$HOME/.raw2draft/context"
+    if [ ! -d "$CONTEXT" ]; then
+        echo "No deployed context found at $CONTEXT"
+        exit 0
+    fi
+    osascript -e "tell application \"Finder\" to delete POSIX file \"$CONTEXT\"" > /dev/null
+    echo "Moved $CONTEXT to Trash."
+    echo "Relaunch Raw2Draft to deploy fresh skills from the app bundle."
+
+# Build, install, and reset context in one step
+refresh: build install reset-context
+    @echo "Build installed and context reset. Relaunch Raw2Draft."
+
 # Run tests
 test:
     xcodebuild -project Raw2Draft.xcodeproj -scheme Raw2Draft -configuration Debug test 2>&1 | tail -20

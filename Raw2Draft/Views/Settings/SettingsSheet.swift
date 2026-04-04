@@ -80,6 +80,11 @@ struct SettingsSheet: View {
                 EnvEditorSection(settingsViewModel: settingsVM)
             }
 
+            Divider()
+
+            // Claude Context
+            ContextSection()
+
             Spacer()
 
             // About
@@ -112,6 +117,60 @@ struct SettingsSheet: View {
             if let message = settingsViewModel?.errorMessage {
                 viewModel.showError(message)
                 settingsViewModel?.errorMessage = nil
+            }
+        }
+    }
+}
+
+/// Claude context (skills, references, CLAUDE.md) management.
+private struct ContextSection: View {
+    @State private var contextReset = false
+
+    private var isStale: Bool { ClaudeContextDeployer.isStale }
+    private var deployedVersion: String? { ClaudeContextDeployer.deployedVersion }
+    private var bundledVersion: String? { ClaudeContextDeployer.bundledVersion }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Claude Context")
+                    .font(AppFonts.headline())
+
+                Text(ClaudeContextDeployer.deployedPath.path)
+                    .font(.system(size: 10, design: .monospaced))
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+
+                Spacer()
+
+                Button("Reset to Defaults") {
+                    contextReset = ClaudeContextDeployer.resetToDefaults()
+                }
+                .controlSize(.small)
+            }
+
+            if isStale {
+                HStack(spacing: 4) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(AppColors.gold)
+                        .font(.system(size: 11))
+                    Text("Context was deployed from an older build. Press Reset to Defaults to update to the latest skills.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            if contextReset {
+                HStack(spacing: 4) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(AppColors.success)
+                        .font(.system(size: 11))
+                    Text("Context reset. Restart terminal sessions to pick up changes.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(AppColors.success)
+                }
+                .transition(.opacity)
             }
         }
     }
