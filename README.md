@@ -7,27 +7,34 @@ Isaac Flath's personal writing tool.
 
 Markdown editor with an integrated Claude Code terminal for macOS.
 
-## Download
+## Installation
 
-Grab the latest DMG from [Releases](https://github.com/Isaac-Flath/raw2draft/releases). Open the DMG and drag Raw2Draft to your Applications folder.
+Requires [just](https://github.com/casey/just) and Xcode.
 
-> **Note:** This build is not code-signed or notarized. On first launch, right-click the app and select **Open** to bypass the macOS security prompt.
+```bash
+git clone https://github.com/Isaac-Flath/raw2draft.git
+cd raw2draft
+just build
+just install
+```
+
+This compiles a Release build, copies it to `/Applications/Raw2Draft.app`, and installs the `draft` CLI to `~/.local/bin/draft` (make sure `~/.local/bin` is on your `PATH`).
 
 ### First launch
 
-- **Content root**: Set via Settings if using Content Studio mode (needs `posts/` and `projects/` directories)
-- **API keys**: Add via Settings, or edit `~/.raw2draft/.env` directly
+- **Content Studio mode** activates automatically when you open a directory containing a `posts/` subdirectory
+- **API keys**: Add via Settings (`Cmd+,`), or edit `~/.raw2draft/.env` directly
 
 ## Features
 
-This is a personal tool that I build for myself. Some things are well-tested and used daily, some are experimental, and some are brand new and barely tested. It all ships together.  Use what works for you.
+This is a personal tool that I build for myself. Some things are well-tested and used daily, some are experimental, and some are brand new and barely tested. It all ships together. Use what works for you.
 
 - Split-pane markdown editor (CodeMirror 6) + Claude Code terminal
 - Content Studio mode for managing blog posts and content projects
 - Live markdown preview with heading outline
 - Customizable Claude skills and context deployed to `~/.raw2draft/context/`
 - Blog post browser with draft/published/scheduled status
-- Command palette (Shift+Cmd+K) for discovering shortcuts and skills
+- Command palette (`Cmd+P`) for discovering shortcuts and skills
 - Drag-and-drop image upload to S3
 - Social media content generation and scheduling
 - Video editing skills (DaVinci Resolve integration)
@@ -99,28 +106,25 @@ There is no special Claude Code integration. The app runs a terminal and launche
 
 On first launch, bundled context is deployed to `~/.raw2draft/context/`. This includes a CLAUDE.md, skills, and reference documents. Edit these files to customize behavior — the app won't overwrite your changes on subsequent launches.
 
-To reset to defaults, delete `~/.raw2draft/context/` and relaunch.
-
-## Building from source
+When you update Raw2Draft, the app will detect that your context is from an older build and show a notice in Settings. You can press **Reset to Defaults** in Settings to get fresh skills, or run:
 
 ```bash
-git clone https://github.com/Isaac-Flath/raw2draft.git
-cd raw2draft
-open Raw2Draft.xcodeproj
+just reset-context
 ```
 
-Build and run from Xcode (Cmd+R), or use [just](https://github.com/casey/just):
+This moves your existing context to the Trash (so you can recover it) and the next launch deploys the updated version.
+
+## Just recipes
 
 ```bash
-just build    # Compile (Release). Output goes to Xcode DerivedData.
-just install  # Copy app to /Applications and install the `draft` CLI.
-just test     # Run tests.
+just build          # Compile (Release)
+just install        # Copy app to /Applications and install the draft CLI
+just reset-context  # Move deployed context to Trash (relaunch to get fresh skills)
+just refresh        # Build + install + reset context in one step
+just test           # Run tests
 ```
 
-`just install` does three things:
-1. Copies the built app to `/Applications/Raw2Draft.app` (kills the running instance first)
-2. Installs the `draft` CLI to `~/.local/bin/draft`
-3. Requires `~/.local/bin` on your `PATH` for the CLI to work
+## CLI
 
 The `draft` CLI lets you open files and directories from any terminal:
 
