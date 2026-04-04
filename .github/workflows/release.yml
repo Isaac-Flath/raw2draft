@@ -17,10 +17,37 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer
 
+      - name: Install certificate
+        env:
+          CERTIFICATE_P12: ${{ secrets.CERTIFICATE_P12 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          # Decode certificate
+          echo "$CERTIFICATE_P12" | base64 --decode > $RUNNER_TEMP/certificate.p12
+
+          # Create and configure keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # Import certificate
+          security import $RUNNER_TEMP/certificate.p12 \
+            -P "$CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12 \
+            -k $KEYCHAIN_PATH
+          security set-key-partition-list -S apple-tool:,apple: \
+            -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security list-keychains -d user -s $KEYCHAIN_PATH
+
       - name: Resolve packages
         run: xcodebuild -project Raw2Draft.xcodeproj -scheme Raw2Draft -configuration Release -resolvePackageDependencies
 
       - name: Build
+        env:
+          DEVELOPER_ID: ${{ secrets.DEVELOPER_ID }}
         run: |
           BUILD_NUM=$(date +%Y%m%d%H%M%S)
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUM" Raw2Draft/Resources/Info.plist
@@ -28,25 +55,118 @@ jobs:
             -scheme Raw2Draft \
             -configuration Release \
             -derivedDataPath build \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Developer ID Application: $DEVELOPER_ID" \
+            OTHER_CODE_SIGN_FLAGS="--options runtime" \
             build
+
+      - name: Re-sign app with hardened runtime
+        env:
+          DEVELOPER_ID: ${{ secrets.DEVELOPER_ID }}
+        run: |
+          APP_PATH="build/Build/Products/Release/Raw2Draft.app"
+          IDENTITY="Developer ID Application: $DEVELOPER_ID"
+          ENTITLEMENTS="Raw2Draft/Resources/Raw2Draft.entitlements"
+
+          # Re-sign only Mach-O binaries and frameworks with hardened runtime
+          find "$APP_PATH" -type f | while read f; do
+            if file "$f" | grep -q "Mach-O"; then
+              echo "Signing: $f"
+              codesign --force --sign "$IDENTITY" --options runtime --timestamp "$f"
+            fi
+          done
+
+          # Sign the app bundle itself (no --deep; nested items already signed above)
+          codesign --force --sign "$IDENTITY" \
+            --options runtime \
+            --entitlements "$ENTITLEMENTS" \
+            --timestamp \
+            "$APP_PATH"
+
+          # Verify
+          codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 
       - name: Create DMG
         run: |
           APP_PATH="build/Build/Products/Release/Raw2Draft.app"
           DMG_NAME="Raw2Draft-${GITHUB_REF_NAME}.dmg"
 
-          # Create a temporary directory for the DMG contents
           mkdir -p dmg-staging
           cp -R "$APP_PATH" dmg-staging/
           ln -s /Applications dmg-staging/Applications
 
-          # Create the DMG
           hdiutil create -volname "Raw2Draft" \
             -srcfolder dmg-staging \
             -ov -format UDZO \
             "$DMG_NAME"
 
+          # Sign the DMG
+          codesign --force --sign "Developer ID Application: ${{ secrets.DEVELOPER_ID }}" --timestamp "$DMG_NAME"
+
           echo "DMG_NAME=$DMG_NAME" >> "$GITHUB_ENV"
+
+      - name: Notarize DMG
+        id: notarize
+        timeout-minutes: 15
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APP_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
+        run: |
+          # Submit without --wait so we capture the submission ID immediately
+          SUBMIT_RESULT=$(xcrun notarytool submit "$DMG_NAME" \
+            --apple-id "$APPLE_ID" \
+            --password "$APP_SPECIFIC_PASSWORD" \
+            --team-id "$TEAM_ID" \
+            --output-format json)
+
+          echo "$SUBMIT_RESULT"
+          SUBMISSION_ID=$(echo "$SUBMIT_RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
+          echo "SUBMISSION_ID=$SUBMISSION_ID" >> "$GITHUB_ENV"
+          echo "Submission ID: $SUBMISSION_ID"
+
+          # Now wait for it separately with timeout
+          xcrun notarytool wait "$SUBMISSION_ID" \
+            --apple-id "$APPLE_ID" \
+            --password "$APP_SPECIFIC_PASSWORD" \
+            --team-id "$TEAM_ID" \
+            --timeout 10m
+
+          # Check the result
+          INFO=$(xcrun notarytool info "$SUBMISSION_ID" \
+            --apple-id "$APPLE_ID" \
+            --password "$APP_SPECIFIC_PASSWORD" \
+            --team-id "$TEAM_ID" \
+            --output-format json)
+
+          echo "$INFO"
+          STATUS=$(echo "$INFO" | python3 -c "import sys,json; print(json.load(sys.stdin)['status'])")
+          if [ "$STATUS" != "Accepted" ]; then
+            echo "::error::Notarization failed with status: $STATUS"
+            xcrun notarytool log "$SUBMISSION_ID" \
+              --apple-id "$APPLE_ID" \
+              --password "$APP_SPECIFIC_PASSWORD" \
+              --team-id "$TEAM_ID"
+            exit 1
+          fi
+
+          xcrun stapler staple "$DMG_NAME"
+
+      - name: Show notarization log on failure
+        if: failure() && env.SUBMISSION_ID != ''
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APP_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
+        run: |
+          xcrun notarytool log "$SUBMISSION_ID" \
+            --apple-id "$APPLE_ID" \
+            --password "$APP_SPECIFIC_PASSWORD" \
+            --team-id "$TEAM_ID" || true
+
+      - name: Clean up keychain
+        if: always()
+        run: security delete-keychain $RUNNER_TEMP/app-signing.keychain-db || true
 
       - name: Create release
         uses: softprops/action-gh-release@v2
@@ -58,10 +178,7 @@ jobs:
 
             1. Download the DMG below
             2. Open it and drag **Raw2Draft** to the **Applications** folder
-            3. On first launch, right-click the app and select **Open** (required for unsigned apps)
 
             ### Requirements
             - macOS 14.0+
             - [Claude CLI](https://claude.ai/download) installed
-
-            > **Note:** This build is not code-signed or notarized. macOS will show a security prompt on first launch — use right-click > Open to bypass it.
