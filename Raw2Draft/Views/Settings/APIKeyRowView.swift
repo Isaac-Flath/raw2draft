@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Row for displaying and managing an API key in Settings.
 struct APIKeyRowView: View {
-    let key: KeychainKey
+    let key: APIKey
     let isSet: Bool
     @Binding var inputValue: String
     let onSave: () -> Void

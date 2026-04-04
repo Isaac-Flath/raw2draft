@@ -17,6 +17,7 @@ struct MarkdownEditorWebView: NSViewRepresentable {
     let onWordCount: (Int, Int) -> Void
     let onCursorPosition: (Int, Int) -> Void
     let onSendToTerminal: (String) -> Void
+    let envLookup: (String) -> String?
 
     func makeCoordinator() -> Coordinator {
         Coordinator(parent: self)
@@ -234,13 +235,13 @@ extension MarkdownEditorWebView.Coordinator {
     func uploadImageToS3(name: String, base64: String, placeholder: String) {
         guard let data = Data(base64Encoded: base64) else { return }
 
-        // Read S3 config from environment/keychain
-        let env = ProcessInfo.processInfo.environment
-        guard let bucket = env["S3_BUCKET"], !bucket.isEmpty else {
+        // Read S3 config from EnvFileService (falls back to process environment)
+        let envLookup = parent.envLookup
+        guard let bucket = envLookup("S3_BUCKET"), !bucket.isEmpty else {
             replaceUploadPlaceholder(placeholder, with: "![Upload failed: S3_BUCKET not set]()")
             return
         }
-        let region = env["AWS_REGION"] ?? "us-east-1"
+        let region = envLookup("AWS_REGION") ?? "us-east-1"
 
         // Generate unique filename
         let timestamp = Int(Date().timeIntervalSince1970)
@@ -267,9 +268,12 @@ extension MarkdownEditorWebView.Coordinator {
             process.executableURL = URL(fileURLWithPath: awsPath)
             process.arguments = ["s3", "cp", tempURL.path, "s3://\(bucket)/\(s3Key)", "--region", region]
 
-            // Pass through AWS credentials from environment
+            // Pass through AWS credentials from EnvFileService + process environment
             var processEnv = ProcessInfo.processInfo.environment
             processEnv["PATH"] = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+            for key in ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_REGION", "S3_BUCKET"] {
+                if let value = envLookup(key) { processEnv[key] = value }
+            }
             process.environment = processEnv
 
             do {

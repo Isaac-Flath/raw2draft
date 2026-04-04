@@ -1,5 +1,8 @@
 import Foundation
 import AppKit
+import os
+
+private let logger = Logger(subsystem: "com.raw2draft", category: "AppViewModel")
 
 /// Top-level state coordinator. Manages project list, UI state, and delegates
 /// file editing to EditorViewModel.
@@ -79,7 +82,7 @@ final class AppViewModel: ErrorHandling {
 
     // MARK: - Initialization
 
-    private static let draftOpenPath = "/tmp/raw2draft-open"
+    private static let draftOpenURL = Constants.draftOpenFile
 
     func loadInitialState() {
         // Check if launched via `draft` CLI with a specific path
@@ -106,19 +109,18 @@ final class AppViewModel: ErrorHandling {
 
     /// Read and consume the temp file written by the `draft` CLI.
     private func consumeDraftOpenFile() -> URL? {
-        let path = Self.draftOpenPath
-        guard FileManager.default.fileExists(atPath: path),
-              let contents = try? String(contentsOfFile: path, encoding: .utf8) else { return nil }
+        let url = Self.draftOpenURL
+        guard FileManager.default.fileExists(atPath: url.path),
+              let contents = try? String(contentsOf: url, encoding: .utf8) else { return nil }
 
         let trimmed = contents.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
 
-        try? FileManager.default.removeItem(atPath: path)
+        try? FileManager.default.removeItem(at: url)
         return URL(fileURLWithPath: trimmed)
     }
 
     private func loadContentStudioState(initialFile: URL? = nil) {
-        projectService.bootstrapSkillsIfNeeded()
         loadProjects()
         loadPinnedProjects()
 
@@ -172,6 +174,7 @@ final class AppViewModel: ErrorHandling {
         do {
             projects = try projectService.listProjectStatuses()
         } catch {
+            logger.warning("Failed to load projects: \(error.localizedDescription)")
             projects = []
         }
     }

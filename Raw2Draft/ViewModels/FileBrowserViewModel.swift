@@ -1,4 +1,7 @@
 import Foundation
+import os
+
+private let logger = Logger(subsystem: "com.raw2draft", category: "FileBrowser")
 
 /// A node in the file tree — either a file or an expandable directory.
 struct FileNode: Identifiable, Equatable {
@@ -107,6 +110,7 @@ final class FileBrowserViewModel {
             editingName = filename
             return fileURL
         } catch {
+            logger.warning("Failed to create file '\(filename)': \(error.localizedDescription)")
             return nil
         }
     }
@@ -132,6 +136,7 @@ final class FileBrowserViewModel {
             editingName = dirName
             return dirURL
         } catch {
+            logger.warning("Failed to create directory '\(dirName)': \(error.localizedDescription)")
             return nil
         }
     }
@@ -168,7 +173,7 @@ final class FileBrowserViewModel {
             try fileManager.trashItem(at: url, resultingItemURL: nil)
             refreshPreservingState()
         } catch {
-            // Trash failed — try to continue
+            logger.warning("Failed to trash '\(url.lastPathComponent)': \(error.localizedDescription)")
         }
 
         pendingDeleteURL = nil
@@ -196,6 +201,7 @@ final class FileBrowserViewModel {
             refreshPreservingState()
             return newURL
         } catch {
+            logger.warning("Failed to rename '\(url.lastPathComponent)' to '\(newName)': \(error.localizedDescription)")
             editingNodeId = nil
             return nil
         }

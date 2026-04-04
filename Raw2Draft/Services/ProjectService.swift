@@ -25,7 +25,6 @@ protocol ProjectServiceProtocol {
     func fileExists(projectId: String, relativePath: String) -> Bool
     func resolveProjectRoot(_ projectId: String) -> URL
     func revealInFinder(projectId: String)
-    func bootstrapSkillsIfNeeded()
 }
 
 /// File system-based project CRUD operations. Port of server/projects.js.
@@ -39,14 +38,6 @@ final class ProjectService: ProjectServiceProtocol {
     init(projectsDirectory: URL = Constants.defaultContentPlatformRoot.appendingPathComponent("posts")) {
         self.projectsDirectory = projectsDirectory
         try? fileManager.createDirectory(at: projectsDirectory, withIntermediateDirectories: true)
-    }
-
-    /// Verify skills directory exists at the monorepo root.
-    func bootstrapSkillsIfNeeded() {
-        let skillsDir = projectsDirectory.deletingLastPathComponent().appendingPathComponent(".claude/skills")
-        if !fileManager.fileExists(atPath: skillsDir.path) {
-            logger.warning("Skills directory not found at \(skillsDir.path)")
-        }
     }
 
     // MARK: - Path Resolution
@@ -380,6 +371,7 @@ final class ProjectService: ProjectServiceProtocol {
             let data = try Data(contentsOf: sourcesPath)
             return try jsonDecoder.decode(SourcesFile.self, from: data)
         } catch {
+            logger.warning("Failed to read sources.json for '\(projectId)': \(error.localizedDescription)")
             return SourcesFile(urls: [])
         }
     }

@@ -50,9 +50,9 @@ final class TerminalViewModel {
 
         var commands: [ActionCommand] {
             switch self {
-            case .content: return [.status, .blog, .bts, .social, .schedule]
+            case .content: return [.status, .blog, .social]
             case .video: return [.videoEditor, .videoResolve]
-            case .publish: return [.publish]
+            case .publish: return [.blogSchedule, .socialSchedule, .publish]
             }
         }
     }
@@ -60,9 +60,9 @@ final class TerminalViewModel {
     enum ActionCommand: String {
         case status = "/content-status"
         case blog = "/content-blog"
-        case bts = "/content-bts"
         case social = "/content-social"
-        case schedule = "/content-schedule"
+        case blogSchedule = "/blog-schedule"
+        case socialSchedule = "/social-schedule"
         case videoEditor = "/video-editor"
         case videoResolve = "/video-resolve"
         case publish = "/publish"
@@ -71,9 +71,9 @@ final class TerminalViewModel {
             switch self {
             case .status: return "Status"
             case .blog: return "Blog"
-            case .bts: return "BTS"
             case .social: return "Social"
-            case .schedule: return "Schedule"
+            case .blogSchedule: return "Blog Sched"
+            case .socialSchedule: return "Social Sched"
             case .videoEditor: return "Video"
             case .videoResolve: return "Resolve"
             case .publish: return "Publish"

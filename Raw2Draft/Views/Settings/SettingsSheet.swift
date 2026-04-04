@@ -174,7 +174,7 @@ private struct EnvEditorSection: View {
             // Key reference
             DisclosureGroup("Available Keys") {
                 VStack(alignment: .leading, spacing: 2) {
-                    ForEach(KeychainKey.apiKeys, id: \.self) { key in
+                    ForEach(APIKey.allCases, id: \.self) { key in
                         HStack(spacing: 0) {
                             Text(key.rawValue)
                                 .font(.system(size: 11, design: .monospaced))

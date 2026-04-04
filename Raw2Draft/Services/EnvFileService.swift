@@ -2,10 +2,10 @@ import Foundation
 
 /// Protocol for key-value storage of API keys and config via .env files.
 protocol EnvFileServiceProtocol {
-    func getKey(_ key: KeychainKey) -> String?
-    func setKey(_ key: KeychainKey, value: String) throws
-    func deleteKey(_ key: KeychainKey) throws
-    func getKeyStatuses() -> [(key: KeychainKey, present: Bool)]
+    func getKey(_ key: APIKey) -> String?
+    func setKey(_ key: APIKey, value: String) throws
+    func deleteKey(_ key: APIKey) throws
+    func getKeyStatuses() -> [(key: APIKey, present: Bool)]
     func hydrateEnvironment(_ env: inout [String: String])
 
     /// URL of the backing .env file.
@@ -33,29 +33,29 @@ final class EnvFileService: EnvFileServiceProtocol {
 
     // MARK: - Public API
 
-    func getKey(_ key: KeychainKey) -> String? {
+    func getKey(_ key: APIKey) -> String? {
         lock.lock()
         defer { lock.unlock() }
         let value = cache[key.rawValue]
         return (value?.isEmpty ?? true) ? nil : value
     }
 
-    func setKey(_ key: KeychainKey, value: String) throws {
+    func setKey(_ key: APIKey, value: String) throws {
         lock.lock()
         cache[key.rawValue] = value
         lock.unlock()
         try saveToDisk()
     }
 
-    func deleteKey(_ key: KeychainKey) throws {
+    func deleteKey(_ key: APIKey) throws {
         lock.lock()
         cache.removeValue(forKey: key.rawValue)
         lock.unlock()
         try saveToDisk()
     }
 
-    func getKeyStatuses() -> [(key: KeychainKey, present: Bool)] {
-        KeychainKey.allCases.map { key in
+    func getKeyStatuses() -> [(key: APIKey, present: Bool)] {
+        APIKey.allCases.map { key in
             (key: key, present: getKey(key) != nil)
         }
     }
@@ -63,7 +63,7 @@ final class EnvFileService: EnvFileServiceProtocol {
     func hydrateEnvironment(_ env: inout [String: String]) {
         lock.lock()
         defer { lock.unlock() }
-        for key in KeychainKey.environmentKeys {
+        for key in APIKey.allCases {
             if env[key.rawValue] != nil { continue }
             if let value = cache[key.rawValue], !value.isEmpty {
                 env[key.rawValue] = value
@@ -80,7 +80,7 @@ final class EnvFileService: EnvFileServiceProtocol {
 
         // Build .env text from all known keys, preserving order
         var lines: [String] = []
-        for key in KeychainKey.apiKeys {
+        for key in APIKey.allCases {
             let value = cache[key.rawValue] ?? ""
             lines.append("\(key.rawValue)=\(value)")
         }
@@ -138,7 +138,7 @@ final class EnvFileService: EnvFileServiceProtocol {
         var lines: [String] = []
         // Write known keys first (in order), then any extras
         var written = Set<String>()
-        for key in KeychainKey.allCases {
+        for key in APIKey.allCases {
             if let value = cache[key.rawValue] {
                 lines.append("\(key.rawValue)=\(value)")
             }
@@ -155,18 +155,3 @@ final class EnvFileService: EnvFileServiceProtocol {
     }
 }
 
-// MARK: - Errors
-
-enum EnvFileError: LocalizedError {
-    case unableToStore(status: OSStatus)
-    case unableToDelete(status: OSStatus)
-
-    var errorDescription: String? {
-        switch self {
-        case .unableToStore(let status):
-            return "Unable to store item (status: \(status))"
-        case .unableToDelete(let status):
-            return "Unable to delete item (status: \(status))"
-        }
-    }
-}

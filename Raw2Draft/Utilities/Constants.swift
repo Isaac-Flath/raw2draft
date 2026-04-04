@@ -94,10 +94,24 @@ enum Constants {
         projectDateFormatter.string(from: date)
     }
 
+    static let postDateFormat = "yyyy-MM-dd"
+    private static let postDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = postDateFormat
+        return formatter
+    }()
+    static func postDateString(from date: Date = Date()) -> String {
+        postDateFormatter.string(from: date)
+    }
+
     // MARK: - File Extensions
     static let videoExtensions: Set<String> = ["mp4", "mov", "webm"]
     static let imageExtensions: Set<String> = ["png", "jpg", "jpeg", "gif", "webp"]
     static let markdownExtensions: Set<String> = ["md", "mdx", "markdown"]
+
+    // MARK: - IPC
+    /// Temp file used by the `draft` CLI to pass a path to the running app.
+    static let draftOpenFile: URL = FileManager.default.temporaryDirectory.appendingPathComponent("raw2draft-open")
 
     // MARK: - URL Scheme
     static let urlScheme = "raw2draft"

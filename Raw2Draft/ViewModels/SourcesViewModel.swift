@@ -1,4 +1,7 @@
 import Foundation
+import os
+
+private let logger = Logger(subsystem: "com.raw2draft", category: "SourcesViewModel")
 
 /// View model for the sources section.
 @Observable @MainActor
@@ -23,6 +26,7 @@ final class SourcesViewModel: ErrorHandling {
             let sources = try projectService.getSourceUrls(projectId: projectId)
             sourceUrls = sources.urls
         } catch {
+            logger.warning("Failed to load source URLs for '\(projectId)': \(error.localizedDescription)")
             sourceUrls = []
         }
     }

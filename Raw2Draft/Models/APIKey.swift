@@ -1,6 +1,6 @@
 import Foundation
 
-enum KeychainKey: String, CaseIterable {
+enum APIKey: String, CaseIterable {
     case lemonfoxApiKey = "LEMONFOX_API_KEY"
     case openaiApiKey = "OPENAI_API_KEY"
     case geminiApiKey = "GEMINI_API_KEY"
@@ -46,10 +46,4 @@ enum KeychainKey: String, CaseIterable {
         default: return true
         }
     }
-
-    /// Keys shown in Settings UI and used for environment variable hydration.
-    static let apiKeys: [KeychainKey] = allCases
-
-    /// Alias for backward compatibility.
-    static var environmentKeys: [KeychainKey] { apiKeys }
 }

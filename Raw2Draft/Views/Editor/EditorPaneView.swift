@@ -62,7 +62,14 @@ struct EditorPaneView: View {
                         viewModel.editor.reportedCharacterCount = chars
                     },
                     onCursorPosition: { _, _ in },
-                    onSendToTerminal: { viewModel.sendTerminalCommand($0) }
+                    onSendToTerminal: { viewModel.sendTerminalCommand($0) },
+                    envLookup: { key in
+                        if let apiKey = APIKey(rawValue: key),
+                           let value = viewModel.envFileService.getKey(apiKey) {
+                            return value
+                        }
+                        return ProcessInfo.processInfo.environment[key]
+                    }
                 )
             } else if file.isImage {
                 ImagePreviewView(

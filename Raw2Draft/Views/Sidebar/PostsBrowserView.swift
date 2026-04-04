@@ -239,13 +239,9 @@ struct PostsBrowserView: View {
     // MARK: - Create
 
     private func createDirectory(name: String) {
-        guard !name.isEmpty else { return }
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        let dateString = dateFormatter.string(from: Date())
-        let slug = name.lowercased()
-            .replacingOccurrences(of: " ", with: "-")
-            .filter { $0.isLetter || $0.isNumber || $0 == "-" }
+        guard !name.isEmpty,
+              let slug = PathSanitizer.slugify(name) else { return }
+        let dateString = Constants.postDateString()
         let dirName = "\(dateString)-\(slug)"
         let dirURL = postsDirectory.appendingPathComponent(dirName)
         let blogFile = dirURL.appendingPathComponent("blog.md")
@@ -714,8 +710,3 @@ private struct NewDirectorySheet: View {
     }
 }
 
-// MARK: - String + Identifiable for sheet binding
-
-extension String: @retroactive Identifiable {
-    public var id: String { self }
-}

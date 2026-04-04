@@ -53,6 +53,7 @@ final class EditorViewModel: ErrorHandling {
         do {
             files = try projectService.listProjectFiles(projectId: projectId)
         } catch {
+            logger.warning("Failed to load files for project '\(projectId)': \(error.localizedDescription)")
             files = []
         }
 
@@ -332,9 +333,7 @@ final class EditorViewModel: ErrorHandling {
     func createNewPost(name: String? = nil, projectId: String? = nil) -> URL? {
         guard let postsDir = postsDirectory else { return nil }
 
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        let dateString = dateFormatter.string(from: Date())
+        let dateString = Constants.postDateString()
 
         let slug = name.flatMap { PathSanitizer.slugify($0) } ?? "untitled"
         let dirName = "\(dateString)-\(slug)"

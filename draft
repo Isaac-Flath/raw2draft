@@ -18,6 +18,6 @@ path="$(cd "$(dirname "$path")" 2>/dev/null && pwd)/$(basename "$path")"
 path="${path%/.}"
 
 # Write the path for the app to pick up on launch
-echo "$path" > /tmp/raw2draft-open
+echo "$path" > "${TMPDIR:-/tmp}/raw2draft-open"
 
 open -a Raw2Draft

@@ -2,7 +2,7 @@ import AppKit
 
 /// AppDelegate for single-instance enforcement, file open handling, and window configuration.
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    private static let openFilePath = "/tmp/raw2draft-open"
+    private static let openFileURL = Constants.draftOpenFile
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Force light appearance for consistent lavender theme
@@ -52,15 +52,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Read and consume the temp file written by the `draft` CLI.
     private func checkForDraftOpen() {
-        let path = Self.openFilePath
-        guard FileManager.default.fileExists(atPath: path),
-              let contents = try? String(contentsOfFile: path, encoding: .utf8) else { return }
+        let tempFile = Self.openFileURL
+        guard FileManager.default.fileExists(atPath: tempFile.path),
+              let contents = try? String(contentsOf: tempFile, encoding: .utf8) else { return }
 
         let trimmed = contents.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
         // Consume the file immediately so we don't re-open on next activation
-        try? FileManager.default.removeItem(atPath: path)
+        try? FileManager.default.removeItem(at: tempFile)
 
         let url = URL(fileURLWithPath: trimmed)
         NotificationCenter.default.post(
