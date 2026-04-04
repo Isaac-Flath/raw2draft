@@ -100,11 +100,11 @@ A post with a `date` in the future and `draft: false` is shown as "scheduled" (i
 
 ## How Claude Code integration works
 
-There is no special Claude Code integration. The app runs a terminal and launches the Claude Code harness with no modifications. It uses [agent skills](https://docs.anthropic.com/en/docs/claude-code/skills) to give it additional behavior.
+There is no special Claude Code integration. The app runs a terminal and launches the Claude Code harness in a terminal with no app specific modifications. It uses [agent skills](https://docs.anthropic.com/en/docs/claude-code/skills) to give it additional behavior.
 
 ## Customizing prompts and skills
 
-On first launch, bundled context is deployed to `~/.raw2draft/context/`. This includes a CLAUDE.md, skills, and reference documents. Edit these files to customize behavior — the app won't overwrite your changes on subsequent launches.
+On first launch, bundled context is deployed to `~/.raw2draft/context/`. This includes a CLAUDE.md, skills, and reference documents. Edit these files to customize behavior.  The app won't overwrite your changes on subsequent launches.
 
 When you update Raw2Draft, the app will detect that your context is from an older build and show a notice in Settings. You can press **Reset to Defaults** in Settings to get fresh skills, or run:
 
