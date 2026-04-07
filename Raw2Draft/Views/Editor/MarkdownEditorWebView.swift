@@ -1,5 +1,8 @@
 import SwiftUI
 import WebKit
+import os
+
+private let logger = Logger(subsystem: "com.raw2draft", category: "EditorWebView")
 
 /// WKWebView-based markdown editor powered by CodeMirror 6.
 /// Replaces the NSTextView-based MarkdownEditorView.
@@ -43,10 +46,16 @@ struct MarkdownEditorWebView: NSViewRepresentable {
     func updateNSView(_ webView: WKWebView, context: Context) {
         let coordinator = context.coordinator
 
+        // Always keep the coordinator's pending content up to date so the
+        // "ready" handler can use it even if isReady hasn't fired yet.
+        coordinator.pendingContent = content
+
+        logger.info("updateNSView: isReady=\(coordinator.isReady) contentLen=\(content.count) lastSentLen=\(coordinator.lastSentContent.count) match=\(content == coordinator.lastSentContent)")
+
         // Update content if it changed externally (file switch, etc.)
         if coordinator.isReady && content != coordinator.lastSentContent {
             coordinator.lastSentContent = content
-            webView.evaluateJavaScript("window.editorBridge.setContent(`\(content.jsTemplateEscaped)`)")
+            coordinator.sendContent(content, to: webView)
         }
 
         // Update font
@@ -98,6 +107,9 @@ struct MarkdownEditorWebView: NSViewRepresentable {
         weak var webView: WKWebView?
         var isReady = false
         var lastSentContent = ""
+        /// The latest content from SwiftUI, kept in sync by updateNSView.
+        /// Used by the "ready" handler to avoid relying on the stale `parent` reference.
+        var pendingContent: String = ""
         var lastFontName = ""
         var lastFontSize: CGFloat = 0
         var lastSocialMode = false
@@ -106,7 +118,25 @@ struct MarkdownEditorWebView: NSViewRepresentable {
 
         init(parent: MarkdownEditorWebView) {
             self.parent = parent
+            self.pendingContent = parent.content
             super.init()
+        }
+
+        /// Send content to the JavaScript editor with error logging.
+        func sendContent(_ content: String, to webView: WKWebView) {
+            let escaped = content.jsTemplateEscaped
+            let js = """
+            try { window.editorBridge.setContent(`\(escaped)`); 'ok'; } catch(e) { e.message + '\\n' + e.stack; }
+            """
+            webView.evaluateJavaScript(js) { result, error in
+                if let error {
+                    let nsError = error as NSError
+                    let msg = nsError.userInfo["WKJavaScriptExceptionMessage"] as? String ?? "unknown"
+                    print("[Editor] setContent eval error: \(msg)")
+                } else if let resultStr = result as? String, resultStr != "ok" {
+                    print("[Editor] setContent JS exception (contentLen=\(content.count)): \(resultStr)")
+                }
+            }
         }
 
         // MARK: - WKScriptMessageHandler
@@ -118,9 +148,26 @@ struct MarkdownEditorWebView: NSViewRepresentable {
             switch type {
             case "ready":
                 isReady = true
-                // Load initial content
-                lastSentContent = parent.content
-                webView?.evaluateJavaScript("window.editorBridge.setContent(`\(parent.content.jsTemplateEscaped)`)")
+                // Load initial content using pendingContent (kept in sync by updateNSView)
+                // rather than parent.content which may be stale.
+                let content = pendingContent
+                lastSentContent = content
+                logger.info("ready: sending pendingContent len=\(content.count) first80=\(String(content.prefix(80)))")
+                if let webView {
+                    sendContent(content, to: webView)
+                    // Verify content was actually set by querying the editor
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                        webView.evaluateJavaScript("window.editorBridge.getContent().length") { result, error in
+                            if let len = result as? Int {
+                                logger.info("ready verify: editor doc length=\(len)")
+                            } else if let error {
+                                logger.error("ready verify failed: \(error.localizedDescription)")
+                            }
+                        }
+                    }
+                } else {
+                    logger.warning("ready: webView is nil!")
+                }
 
                 // Set initial font
                 lastFontName = parent.fontName

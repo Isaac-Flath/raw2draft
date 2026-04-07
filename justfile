@@ -8,6 +8,9 @@ default:
 build:
     #!/usr/bin/env bash
     set -euo pipefail
+    echo "Building editor web bundle..."
+    cd editor-web && npm install --silent && npm run build 2>&1 | tail -3
+    cd ..
     BUILD_NUM=$(date +%Y%m%d%H%M%S)
     echo "Building Raw2Draft (Release) build $BUILD_NUM..."
     /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUM" Raw2Draft/Resources/Info.plist

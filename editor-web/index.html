@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Editor</title>
+    <style>
+      /* Font faces — Tiempos Text (serif body) & National 2 (sans headers/UI) */
+      @font-face { font-family: 'Tiempos Text'; src: url('fonts/tiempos-text-regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+      @font-face { font-family: 'Tiempos Text'; src: url('fonts/tiempos-text-regular-italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+      @font-face { font-family: 'Tiempos Text'; src: url('fonts/tiempos-text-bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+      @font-face { font-family: 'National 2'; src: url('fonts/national-2-regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+      @font-face { font-family: 'National 2'; src: url('fonts/national-2-medium.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+      @font-face { font-family: 'National 2'; src: url('fonts/national-2-bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+      @font-face { font-family: 'National 2'; src: url('fonts/national-2-extrabold.woff2') format('woff2'); font-weight: 800; font-style: normal; font-display: swap; }
+
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { height: 100%; overflow: hidden; background: transparent; -webkit-font-smoothing: antialiased; }
+      #container { display: flex; height: 100%; }
+      #container #editor { flex: 1; height: 100%; min-width: 0; }
+      #container .preview-pane {
+        flex: 1;
+        height: 100%;
+        overflow-y: auto;
+        padding: 3rem 2rem;
+        max-width: 740px;
+        margin: 0 auto;
+        border-left: 1px solid rgba(120, 113, 108, 0.2);
+        font-family: 'Tiempos Text', Georgia, serif;
+        font-size: 1.125rem;
+        line-height: 1.95;
+        color: rgb(55, 65, 81);
+      }
+      #container:not(.split-view) #editor { flex: 1; }
+      #container:not(.split-view) .preview-pane { display: none; }
+
+      /* Preview typography — matches isaacflath.com */
+      .preview-pane h1, .preview-pane h2, .preview-pane h3, .preview-pane h4, .preview-pane h5, .preview-pane h6 {
+        font-family: 'National 2', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: rgb(17, 24, 39);
+        font-weight: 700;
+        line-height: 1.3;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+      }
+      .preview-pane h1 { font-size: clamp(2.25rem, 5vw, 3rem); line-height: 1.2; }
+      .preview-pane h1:first-child { margin-top: 0; }
+      .preview-pane h2 { font-size: 2rem; }
+      .preview-pane h3 { font-size: 1.5rem; }
+      .preview-pane h4 { font-size: 1.125rem; font-weight: 600; }
+      .preview-pane p { margin-bottom: 1.5rem; }
+      .preview-pane a {
+        color: rgb(79, 70, 229);
+        text-decoration: underline;
+        text-decoration-color: rgb(199, 210, 254);
+        text-underline-offset: 3px;
+      }
+      .preview-pane a:hover {
+        color: rgb(67, 56, 202);
+        text-decoration-color: rgb(79, 70, 229);
+      }
+      .preview-pane ul, .preview-pane ol { margin-bottom: 1.5rem; padding-left: 2rem; }
+      .preview-pane li { margin-bottom: 0.5rem; }
+      .preview-pane blockquote {
+        margin: 2rem 0;
+        padding: 1.5rem 2rem;
+        border-left: 4px solid rgb(165, 180, 252);
+        background: rgb(238, 242, 255);
+        border-radius: 0 0.75rem 0.75rem 0;
+        font-style: italic;
+      }
+      .preview-pane blockquote p { margin-bottom: 0; }
+      .preview-pane img { max-width: 100%; height: auto; border-radius: 0.75rem; margin: 1.5rem 0; }
+      .preview-pane code {
+        font-family: Monaco, Consolas, 'Courier New', monospace;
+        font-size: 0.9em;
+        background: rgb(238, 242, 255);
+        color: rgb(67, 56, 202);
+        border-radius: 0.25rem;
+        padding: 0.2em 0.4em;
+      }
+      .preview-pane pre {
+        margin: 2rem 0;
+        border-radius: 1rem;
+        overflow: hidden;
+        background: rgb(238, 242, 255);
+        padding: 12px 16px;
+        overflow-x: auto;
+      }
+      .preview-pane pre code { background: none; color: inherit; padding: 0; }
+      .preview-pane table { border-collapse: collapse; margin: 2rem 0; width: 100%; font-size: 0.95rem; }
+      .preview-pane th, .preview-pane td { border: 1px solid rgb(229, 231, 235); padding: 1rem; text-align: left; }
+      .preview-pane th { font-weight: 600; background: rgb(249, 250, 251); }
+      .preview-pane hr { border: none; height: 1px; background: rgb(229, 231, 235); margin: 3rem 0; }
+    </style>
+  </head>
+  <body>
+    <div id="container">
+      <div id="editor"></div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

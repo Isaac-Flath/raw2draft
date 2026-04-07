@@ -90,7 +90,15 @@ struct GhosttyTerminalView: NSViewRepresentable {
                 // Only intercept when the terminal view is first responder
                 guard terminalView.window?.firstResponder === terminalView else { return event }
 
-                // Let ⌘-modified keys reach the menu system instead of Ghostty
+                // Handle ⌘V paste directly into the terminal
+                if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "v" {
+                    if let text = NSPasteboard.general.string(forType: .string) {
+                        self.parent.terminalViewModel.sendKeyToProcess(projectId: projectId, key: text)
+                    }
+                    return nil
+                }
+
+                // Let other ⌘-modified keys reach the menu system instead of Ghostty
                 if event.modifierFlags.contains(.command) {
                     DispatchQueue.main.async {
                         NSApp.mainMenu?.performKeyEquivalent(with: event)
