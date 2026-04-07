@@ -3,8 +3,8 @@ name: Architectural Evaluation
 on:
   workflow_dispatch:
   schedule:
-    # Runs every Monday at 09:00 UTC
-    - cron: '0 9 * * 1'
+    # Runs every Friday at 18:00 UTC
+    - cron: '0 18 * * 5'
 
 permissions:
   issues: write
