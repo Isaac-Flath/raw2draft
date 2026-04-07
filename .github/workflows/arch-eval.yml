@@ -1,0 +1,142 @@
+name: Architectural Evaluation
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Runs every Monday at 09:00 UTC
+    - cron: '0 9 * * 1'
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install anthropic
+
+      - name: Collect source files and call Claude API
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python3 - <<'PYEOF'
+          import os
+          import json
+          import anthropic
+
+          # ------------------------------------------------------------------ #
+          # 1. Collect source files
+          #    Includes: Swift (native app), JavaScript/TypeScript (web editor),
+          #    HTML (editor templates), and shell scripts (CLI wrapper).
+          # ------------------------------------------------------------------ #
+          EXTENSIONS = {'.swift', '.js', '.ts', '.jsx', '.tsx', '.html', '.sh'}
+          SKIP_DIRS  = {'.git', '.build', 'build', 'node_modules', 'DerivedData'}
+
+          def collect_sources(root: str) -> dict[str, str]:
+              sources = {}
+              for dirpath, dirnames, filenames in os.walk(root):
+                  dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
+                  for fname in filenames:
+                      _, ext = os.path.splitext(fname)
+                      if ext not in EXTENSIONS:
+                          continue
+                      fpath = os.path.join(dirpath, fname)
+                      rel   = os.path.relpath(fpath, root)
+                      try:
+                          with open(fpath, encoding='utf-8', errors='replace') as f:
+                              sources[rel] = f.read()
+                      except OSError:
+                          pass
+              return sources
+
+          sources = collect_sources('.')
+
+          # ------------------------------------------------------------------ #
+          # 2. Build the prompt (truncate at file boundaries if needed)
+          # ------------------------------------------------------------------ #
+          MAX_CHARS = 150_000
+          included: list[tuple[str, str]] = []
+          total = 0
+          for path, content in sorted(sources.items()):
+              chunk = f'=== {path} ===\n{content}'
+              if total + len(chunk) > MAX_CHARS:
+                  break
+              included.append(chunk)
+              total += len(chunk)
+
+          omitted = len(sources) - len(included)
+          files_block = '\n\n'.join(included)
+          if omitted:
+              files_block += f'\n\n[... {omitted} file(s) omitted due to size limit ...]'
+
+          prompt = f"""You are an experienced software architect reviewing the full source code of **Raw2Draft**, \
+          a personal macOS writing tool. It is a SwiftUI/AppKit application with an MVVM architecture, \
+          a CodeMirror 6 web editor embedded via WKWebView, a Claude Code terminal integration, \
+          and a small Bash CLI wrapper.
+
+          Below is the complete source tree. Please analyse it and write a structured architectural review \
+          that covers:
+
+          1. **Current architecture overview** – describe layers, data flow, and key design decisions.
+          2. **Strengths** – what is already well-structured, simple, or robust.
+          3. **Weaknesses / pain-points** – concrete problems (coupling, duplication, unclear ownership, \
+             fragile patterns, etc.), with references to specific files or types.
+          4. **Recommendations** – prioritised list of actionable re-architecture suggestions (high / medium / low). \
+             For each: what to change, why it would help (robustness, simplicity, or understandability), \
+             and any trade-offs.
+          5. **Quick wins** – small changes that could be made with minimal risk right now.
+
+          Be specific and refer to actual file names, type names, and method names. \
+          Keep the review concise but thorough. Use markdown formatting.
+
+          --- SOURCE FILES ---
+
+          {files_block}
+          """
+
+          # ------------------------------------------------------------------ #
+          # 3. Call Claude
+          # ------------------------------------------------------------------ #
+          client = anthropic.Anthropic()
+          message = client.messages.create(
+              model='claude-opus-4-5',
+              max_tokens=4096,
+              messages=[{'role': 'user', 'content': prompt}],
+          )
+
+          review = message.content[0].text
+
+          # ------------------------------------------------------------------ #
+          # 4. Write output for next step
+          # ------------------------------------------------------------------ #
+          with open('/tmp/arch_review.md', 'w') as f:
+              f.write(review)
+
+          print('Architecture review generated successfully.')
+          print(f'Tokens used – input: {message.usage.input_tokens}, output: {message.usage.output_tokens}')
+          PYEOF
+
+      - name: Open GitHub issue with the review
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REVIEW=$(cat /tmp/arch_review.md)
+          DATE=$(date -u '+%Y-%m-%d')
+          TITLE="Architectural Evaluation – ${DATE}"
+
+          gh issue create \
+            --title "$TITLE" \
+            --body "$REVIEW" \
+            --label "architecture" || \
+          gh issue create \
+            --title "$TITLE" \
+            --body "$REVIEW"
