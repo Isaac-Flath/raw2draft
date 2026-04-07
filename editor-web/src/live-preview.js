@@ -21,6 +21,8 @@ class ImageWidget extends WidgetType {
     img.src = this.src;
     img.alt = this.alt;
     img.loading = "lazy";
+    img.style.maxWidth = "100%";
+    img.style.height = "auto";
     img.onerror = () => { wrap.style.display = "none"; };
     wrap.appendChild(img);
     return wrap;
