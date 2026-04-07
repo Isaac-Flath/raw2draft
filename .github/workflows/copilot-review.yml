@@ -1,8 +1,8 @@
 name: Copilot Code Review
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  schedule:
+    - cron: '0 0 * * 5'  # Every Friday at midnight UTC
 
 permissions:
   contents: read
