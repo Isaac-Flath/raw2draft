@@ -21,11 +21,11 @@ Edit YouTube videos by analyzing raw recordings, proposing cuts, and building th
 
 ## Tools Required
 - `ffmpeg` / `ffprobe` — run directly via Bash
-- AssemblyAI API — via `transcribe.py` (needs `uv run` for the package)
+- `/content-transcribe` skill — with `--provider assemblyai` for word-level timestamps
 - DaVinci Resolve Studio — via inline Python (see video-resolve skill)
 
 ## Configuration
-- AssemblyAI API key: `.env` file in the skill directory (`ASSEMBLYAI_API_KEY=...`)
+- AssemblyAI API key: `.env` file (`ASSEMBLYAI_API_KEY=...`)
 
 ## Workflow
 
@@ -47,12 +47,11 @@ Parse `silence_start` / `silence_end` from stderr. Adjust thresholds based on au
 - `-30dB` is the default. Noisier audio → lower (e.g., -40). Clean → higher (e.g., -25).
 - `d=1.5` is minimum silence duration. Fast speaker → lower (e.g., 1.0).
 
-**3. Transcription** — use the transcribe script (needs AssemblyAI package):
+**3. Transcription** — use the `/content-transcribe` skill with AssemblyAI:
 ```bash
-cd <project_root>/.claude/skills/video-editor
-uv run scripts/transcribe.py <video_path>
+uv run .claude/skills/content-transcribe/scripts/transcribe.py --provider assemblyai <video_path> claude-edits
 ```
-Returns JSON with word-level timestamps and disfluencies preserved.
+Returns word-level timestamps and disfluencies preserved.
 
 Assemble all three into `_analysis.json`.
 
@@ -77,7 +76,5 @@ references/
 ```
 
 ## File Structure
-```
-scripts/
-    transcribe.py       # AssemblyAI API (needs uv run for package)
-```
+
+Transcription is handled by the `/content-transcribe` skill. No local scripts needed.

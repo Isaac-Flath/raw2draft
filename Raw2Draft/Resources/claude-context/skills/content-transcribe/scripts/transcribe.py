@@ -1,16 +1,17 @@
 #!/usr/bin/env -S uv run
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["httpx", "python-dotenv"]
+# dependencies = ["httpx", "python-dotenv", "assemblyai>=0.54.1"]
 # ///
 """
-Transcription helper using LemonFox Whisper v3 API.
+Transcription helper supporting LemonFox and AssemblyAI providers.
 
 Usage:
-    uv run transcribe.py <video_path> [output_dir]
+    uv run transcribe.py <video_path> [output_dir]                  # LemonFox (default)
+    uv run transcribe.py --provider assemblyai <video_path> [output_dir]  # AssemblyAI
 
 Requires:
-    - LEMONFOX_API_KEY environment variable (or in .env file)
+    - LEMONFOX_API_KEY or ASSEMBLYAI_API_KEY environment variable (or in .env file)
     - ffmpeg / ffprobe
 """
 
@@ -245,6 +246,41 @@ def transcribe_with_lemonfox(video_path: Path, output_dir: Path) -> dict:
             audio_path.unlink()
 
 
+def transcribe_with_assemblyai(video_path: Path, output_dir: Path) -> dict:
+    """Transcribe using AssemblyAI with word-level timestamps and disfluencies preserved."""
+    import assemblyai as aai
+
+    api_key = os.environ.get("ASSEMBLYAI_API_KEY")
+    if not api_key:
+        print("Error: ASSEMBLYAI_API_KEY environment variable not set")
+        sys.exit(1)
+
+    aai.settings.api_key = api_key
+
+    print(f"Transcribing: {video_path.name}")
+    print("Sending to AssemblyAI (word-level timestamps, disfluencies preserved)...")
+
+    config = aai.TranscriptionConfig(
+        speech_models=["universal-3-pro", "universal-2"],
+        disfluencies=True,
+    )
+
+    transcriber = aai.Transcriber()
+    transcript = transcriber.transcribe(str(video_path), config=config)
+
+    if transcript.status == aai.TranscriptStatus.error:
+        raise RuntimeError(f"Transcription failed: {transcript.error}")
+
+    words = [
+        {"word": w.text, "start": w.start / 1000, "end": w.end / 1000}
+        for w in transcript.words
+    ]
+
+    print(f"Transcription complete: {len(words)} words")
+
+    return {"text": transcript.text, "words": words, "segments": None}
+
+
 def generate_chapters(data: dict, duration: float) -> list:
     """Generate chapter markers from transcript segments."""
     segments = data.get("segments", [])
@@ -352,14 +388,27 @@ def save_description(chapters: list, output_dir: Path, video_name: str):
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python transcribe.py <video_path> [output_dir]")
-        print("\nExample:")
-        print("  python transcribe.py source/video.mp4 .content")
+    # Parse --provider flag
+    args = sys.argv[1:]
+    provider = "lemonfox"
+
+    if "--provider" in args:
+        idx = args.index("--provider")
+        if idx + 1 >= len(args):
+            print("Error: --provider requires a value (lemonfox or assemblyai)")
+            sys.exit(1)
+        provider = args[idx + 1]
+        args = args[:idx] + args[idx + 2:]
+
+    if not args:
+        print("Usage: python transcribe.py [--provider lemonfox|assemblyai] <video_path> [output_dir]")
+        print("\nExamples:")
+        print("  python transcribe.py source/video.mp4 content")
+        print("  python transcribe.py --provider assemblyai source/video.mp4 claude-edits")
         sys.exit(1)
 
-    video_path = Path(sys.argv[1])
-    output_dir = Path(sys.argv[2]) if len(sys.argv) > 2 else Path(".content")
+    video_path = Path(args[0])
+    output_dir = Path(args[1]) if len(args) > 1 else Path(".content")
 
     if not video_path.exists():
         print(f"Video not found: {video_path}")
@@ -371,15 +420,22 @@ def main():
     duration = get_video_duration(video_path)
     print(f"Video duration: {format_timestamp(duration)}")
 
-    # Transcribe with LemonFox
-    data = transcribe_with_lemonfox(video_path, output_dir)
+    # Transcribe with selected provider
+    if provider == "assemblyai":
+        data = transcribe_with_assemblyai(video_path, output_dir)
+    elif provider == "lemonfox":
+        data = transcribe_with_lemonfox(video_path, output_dir)
+    else:
+        print(f"Error: unknown provider '{provider}'. Use 'lemonfox' or 'assemblyai'.")
+        sys.exit(1)
 
     # Save transcript
     save_transcript(data, video_path, output_dir, duration)
 
-    # Generate and save description with chapters
-    chapters = generate_chapters(data, duration)
-    save_description(chapters, output_dir, video_path.name)
+    # Generate and save description with chapters (only for segment-level transcripts)
+    if data.get("segments"):
+        chapters = generate_chapters(data, duration)
+        save_description(chapters, output_dir, video_path.name)
 
     print("\nTranscription complete!")
 
