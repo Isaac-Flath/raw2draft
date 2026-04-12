@@ -161,4 +161,4 @@ draft --version # Show installed build number
 
 ## License
 
-GPL-3.0 — see [LICENSE](LICENSE) for details.
+MIT — see [LICENSE](https://github.com/Isaac-Flath/raw2draft/blob/main/LICENSE) for details.

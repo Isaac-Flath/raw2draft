@@ -155,4 +155,4 @@ draft --version # Show installed build number
 
 ## License
 
-GPL-3.0 — see [LICENSE](LICENSE) for details.
+MIT — see [LICENSE](LICENSE) for details.
