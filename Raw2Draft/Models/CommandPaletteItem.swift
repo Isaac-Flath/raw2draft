@@ -76,7 +76,7 @@ enum CommandPaletteProvider {
     // MARK: - Skills
 
     private static func skills() -> [CommandPaletteItem] {
-        let skillsDir = ClaudeContextDeployer.deployedPath
+        let skillsDir = ClaudeContextDeployer.skillsPath
             .appendingPathComponent(".claude/skills")
         let fm = FileManager.default
 

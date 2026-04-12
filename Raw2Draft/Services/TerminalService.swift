@@ -66,20 +66,20 @@ final class TerminalService: TerminalServiceProtocol {
 
         var args = ["--dangerously-skip-permissions"]
 
-        // Add deployed context directories (deployed at app launch by ClaudeContextDeployer)
+        // Add deployed context directory (bundled CLAUDE.md with app-level instructions)
         let contextPath = ClaudeContextDeployer.deployedPath
         if fileManager.fileExists(atPath: contextPath.path) {
             args += ["--add-dir", contextPath.path]
         }
 
-        // Add skills subdirectory (cloned repo containing .claude/skills/)
-        let skillsPath = contextPath.appendingPathComponent("skills")
+        // Add skills directory (custom override or default clone)
+        let skillsPath = ClaudeContextDeployer.skillsPath
         if fileManager.fileExists(atPath: skillsPath.path) {
             args += ["--add-dir", skillsPath.path]
         }
 
-        // Add wiki subdirectory (cloned repo with reference documents)
-        let wikiPath = contextPath.appendingPathComponent("wiki")
+        // Add wiki directory (custom override or default clone)
+        let wikiPath = ClaudeContextDeployer.wikiPath
         if fileManager.fileExists(atPath: wikiPath.path) {
             args += ["--add-dir", wikiPath.path]
         }

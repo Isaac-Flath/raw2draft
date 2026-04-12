@@ -125,10 +125,10 @@ struct SettingsSheet: View {
 /// Claude context (skills, references, CLAUDE.md) management.
 private struct ContextSection: View {
     @State private var contextReset = false
+    @State private var customSkillsPath: String = UserDefaults.standard.string(forKey: UserDefaultsKey.customSkillsPath) ?? ""
+    @State private var customWikiPath: String = UserDefaults.standard.string(forKey: UserDefaultsKey.customWikiPath) ?? ""
 
     private var isStale: Bool { ClaudeContextDeployer.isStale }
-    private var deployedVersion: String? { ClaudeContextDeployer.deployedVersion }
-    private var bundledVersion: String? { ClaudeContextDeployer.bundledVersion }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -145,10 +145,30 @@ private struct ContextSection: View {
                 Spacer()
 
                 Button("Reset to Defaults") {
+                    customSkillsPath = ""
+                    customWikiPath = ""
+                    UserDefaults.standard.removeObject(forKey: UserDefaultsKey.customSkillsPath)
+                    UserDefaults.standard.removeObject(forKey: UserDefaultsKey.customWikiPath)
                     contextReset = ClaudeContextDeployer.resetToDefaults()
                 }
                 .controlSize(.small)
             }
+
+            // Custom skills path
+            contextPathRow(
+                label: "Skills",
+                path: $customSkillsPath,
+                defaultsKey: UserDefaultsKey.customSkillsPath,
+                defaultPath: ClaudeContextDeployer.defaultSkillsPath.path
+            )
+
+            // Custom wiki path
+            contextPathRow(
+                label: "Wiki",
+                path: $customWikiPath,
+                defaultsKey: UserDefaultsKey.customWikiPath,
+                defaultPath: ClaudeContextDeployer.defaultWikiPath.path
+            )
 
             if isStale {
                 HStack(spacing: 4) {
@@ -172,6 +192,43 @@ private struct ContextSection: View {
                 }
                 .transition(.opacity)
             }
+        }
+    }
+
+    private func contextPathRow(label: String, path: Binding<String>, defaultsKey: String, defaultPath: String) -> some View {
+        HStack(spacing: 6) {
+            Text(label)
+                .font(.system(size: 12, weight: .medium))
+                .frame(width: 40, alignment: .leading)
+
+            Text(path.wrappedValue.isEmpty ? defaultPath : path.wrappedValue)
+                .font(.system(size: 11, design: .monospaced))
+                .foregroundStyle(path.wrappedValue.isEmpty ? .tertiary : .secondary)
+                .lineLimit(1)
+                .truncationMode(.middle)
+
+            Spacer()
+
+            if !path.wrappedValue.isEmpty {
+                Button("Clear") {
+                    path.wrappedValue = ""
+                    UserDefaults.standard.removeObject(forKey: defaultsKey)
+                }
+                .controlSize(.mini)
+            }
+
+            Button("Choose...") {
+                let panel = NSOpenPanel()
+                panel.canChooseFiles = false
+                panel.canChooseDirectories = true
+                panel.allowsMultipleSelection = false
+                panel.message = "Select custom \(label.lowercased()) directory"
+                if panel.runModal() == .OK, let url = panel.url {
+                    path.wrappedValue = url.path
+                    UserDefaults.standard.set(url.path, forKey: defaultsKey)
+                }
+            }
+            .controlSize(.mini)
         }
     }
 }

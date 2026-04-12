@@ -16,6 +16,32 @@ enum ClaudeContextDeployer {
     private static let starterSkillsRepo = "https://github.com/Isaac-Flath/agent-starter-skills.git"
     private static let starterWikiRepo = "https://github.com/Isaac-Flath/agent-starter-wiki.git"
 
+    /// The default (cloned) skills path inside the deployed context directory.
+    static let defaultSkillsPath: URL = deployedPath.appendingPathComponent("skills")
+
+    /// The default (cloned) wiki path inside the deployed context directory.
+    static let defaultWikiPath: URL = deployedPath.appendingPathComponent("wiki")
+
+    /// Resolved skills path: custom override if set, otherwise the default clone.
+    static var skillsPath: URL {
+        if let custom = UserDefaults.standard.string(forKey: UserDefaultsKey.customSkillsPath),
+           !custom.isEmpty,
+           FileManager.default.fileExists(atPath: custom) {
+            return URL(fileURLWithPath: custom)
+        }
+        return defaultSkillsPath
+    }
+
+    /// Resolved wiki path: custom override if set, otherwise the default clone.
+    static var wikiPath: URL {
+        if let custom = UserDefaults.standard.string(forKey: UserDefaultsKey.customWikiPath),
+           !custom.isEmpty,
+           FileManager.default.fileExists(atPath: custom) {
+            return URL(fileURLWithPath: custom)
+        }
+        return defaultWikiPath
+    }
+
     /// Whether the deployed context is older than the bundled version.
     static var isStale: Bool {
         guard let deployed = deployedVersion, let bundled = bundledVersion else { return false }
@@ -37,53 +63,54 @@ enum ClaudeContextDeployer {
     static func deploy() -> Bool {
         let fm = FileManager.default
 
-        // If context directory already exists, just check staleness
         if fm.fileExists(atPath: deployedPath.path) {
             if isStale {
                 logger.info("Deployed context is from a different build. Use Settings > Reset Context to update.")
             }
-            return true
-        }
-
-        // Create the context directory
-        do {
-            try fm.createDirectory(at: deployedPath, withIntermediateDirectories: true)
-        } catch {
-            logger.warning("Failed to create context directory: \(error.localizedDescription)")
-            return false
-        }
-
-        // Copy bundled CLAUDE.md
-        if let bundledContext = Bundle.main.resourceURL?.appendingPathComponent("claude-context") {
-            let bundledClaudeMd = bundledContext.appendingPathComponent("CLAUDE.md")
-            if fm.fileExists(atPath: bundledClaudeMd.path) {
-                let destClaudeMd = deployedPath.appendingPathComponent("CLAUDE.md")
-                try? fm.copyItem(at: bundledClaudeMd, to: destClaudeMd)
+        } else {
+            // Create the context directory
+            do {
+                try fm.createDirectory(at: deployedPath, withIntermediateDirectories: true)
+            } catch {
+                logger.warning("Failed to create context directory: \(error.localizedDescription)")
+                return false
             }
+
+            // Copy bundled CLAUDE.md
+            if let bundledContext = Bundle.main.resourceURL?.appendingPathComponent("claude-context") {
+                let bundledClaudeMd = bundledContext.appendingPathComponent("CLAUDE.md")
+                if fm.fileExists(atPath: bundledClaudeMd.path) {
+                    let destClaudeMd = deployedPath.appendingPathComponent("CLAUDE.md")
+                    try? fm.copyItem(at: bundledClaudeMd, to: destClaudeMd)
+                }
+            }
+
+            // Stamp the version
+            writeVersionStamp()
         }
 
-        // Clone starter repos in the background
+        // Clone starter repos if missing (idempotent — checks each sub-dir)
         cloneStarterRepos()
-
-        // Stamp the version
-        writeVersionStamp()
 
         return true
     }
 
     /// Clone starter skills and wiki repos into the context directory.
+    /// Skips repos that have a custom path configured in Settings.
     private static func cloneStarterRepos() {
-        let skillsPath = deployedPath.appendingPathComponent("skills")
-        let wikiPath = deployedPath.appendingPathComponent("wiki")
+        let defaults = UserDefaults.standard
+        let fm = FileManager.default
 
-        // Clone skills repo (contains .claude/skills/ structure)
-        if !FileManager.default.fileExists(atPath: skillsPath.path) {
-            gitClone(repo: starterSkillsRepo, to: skillsPath)
+        // Skip skills clone if a custom path is configured
+        let hasCustomSkills = !(defaults.string(forKey: UserDefaultsKey.customSkillsPath) ?? "").isEmpty
+        if !hasCustomSkills && !fm.fileExists(atPath: defaultSkillsPath.path) {
+            gitClone(repo: starterSkillsRepo, to: defaultSkillsPath)
         }
 
-        // Clone wiki repo (contains reference documents)
-        if !FileManager.default.fileExists(atPath: wikiPath.path) {
-            gitClone(repo: starterWikiRepo, to: wikiPath)
+        // Skip wiki clone if a custom path is configured
+        let hasCustomWiki = !(defaults.string(forKey: UserDefaultsKey.customWikiPath) ?? "").isEmpty
+        if !hasCustomWiki && !fm.fileExists(atPath: defaultWikiPath.path) {
+            gitClone(repo: starterWikiRepo, to: defaultWikiPath)
         }
     }
 

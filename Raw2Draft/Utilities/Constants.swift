@@ -152,6 +152,8 @@ enum UserDefaultsKey {
 
     static let defaultAuthor = "defaultAuthor"
     static let recentWorkspaces = "recentWorkspaces"
+    static let customSkillsPath = "customSkillsPath"
+    static let customWikiPath = "customWikiPath"
 
     static func lastFile(for projectId: String) -> String {
         "lastFile_\(projectId)"
