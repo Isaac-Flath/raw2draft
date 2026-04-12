@@ -3,9 +3,11 @@
 > [!WARNING]
 > This app runs Claude Code with `--dangerously-skip-permissions` (YOLO mode). All AI-initiated actions — file writes, shell commands, etc. — are automatically approved without prompting. Use at your own risk and only with content you trust.
 
-Isaac Flath's personal writing tool.
+Isaac Flath's personal writing tool. A markdown editor with an integrated Claude Code terminal for macOS.
 
-Markdown editor with an integrated Claude Code terminal for macOS.
+In my daily use, the agent skills are paired with a personal knowledge base (via [agentkb](https://github.com/Isaac-Flath/agentkb)) containing writing style guides, taste decisions, critique patterns, and domain expertise. That knowledge base is what makes the agent output good — the skills are just procedures. Without a knowledge base, the skills will work but the results will feel generic.
+
+Any knowledge base works — agentkb, a wiki directory, a set of markdown files, or a well-written CLAUDE.md. The key is giving the agent context about *how* to do things well, not just *what* to do.
 
 ## Installation
 
@@ -106,7 +108,7 @@ There is no special Claude Code integration. The app runs a terminal and launche
 
 On first launch, Raw2Draft clones two public starter repos into `~/.raw2draft/context/`:
 
-- **[agentkb-skills](https://github.com/Isaac-Flath/agentkb-skills)** — Agent skills for content creation, transcription, social media, video editing, and more
+- **[agent-starter-skills](https://github.com/Isaac-Flath/agent-starter-skills)** — Agent skills for content creation, transcription, social media, video editing, and more
 - **[agent-starter-wiki](https://github.com/Isaac-Flath/agent-starter-wiki)** — Writing style guides and reference documents
 
 These are passed to Claude Code via `--add-dir` so skills are available as `/slash-commands` and reference docs are in context.

@@ -13,7 +13,7 @@ enum ClaudeContextDeployer {
 
     private static let versionFile = deployedPath.appendingPathComponent(".version")
 
-    private static let starterSkillsRepo = "https://github.com/Isaac-Flath/agentkb-skills.git"
+    private static let starterSkillsRepo = "https://github.com/Isaac-Flath/agent-starter-skills.git"
     private static let starterWikiRepo = "https://github.com/Isaac-Flath/agent-starter-wiki.git"
 
     /// Whether the deployed context is older than the bundled version.
