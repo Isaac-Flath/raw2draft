@@ -3,14 +3,18 @@ import os
 
 private let logger = Logger(subsystem: "com.raw2draft", category: "ContextDeployer")
 
-/// Deploys bundled Claude Code context (skills, references, CLAUDE.md) to ~/.raw2draft/context/.
-/// Called at app launch to ensure skills are available.
+/// Deploys Claude Code context to ~/.raw2draft/context/.
+/// On first launch, copies the bundled CLAUDE.md and clones starter repos for skills and wiki.
+/// Called at app launch to ensure context is available.
 enum ClaudeContextDeployer {
     /// Deployed context path that TerminalService passes via --add-dir.
     static let deployedPath: URL = FileManager.default.homeDirectoryForCurrentUser
         .appendingPathComponent(".raw2draft/context")
 
     private static let versionFile = deployedPath.appendingPathComponent(".version")
+
+    private static let starterSkillsRepo = "https://github.com/Isaac-Flath/agentkb-skills.git"
+    private static let starterWikiRepo = "https://github.com/Isaac-Flath/agent-starter-wiki.git"
 
     /// Whether the deployed context is older than the bundled version.
     static var isStale: Bool {
@@ -28,16 +32,12 @@ enum ClaudeContextDeployer {
         Bundle.main.infoDictionary?["CFBundleVersion"] as? String
     }
 
-    /// Deploy bundled resources only if not already present (preserves user modifications).
+    /// Deploy bundled CLAUDE.md and clone starter repos if not already present.
     @discardableResult
     static func deploy() -> Bool {
         let fm = FileManager.default
 
-        guard let bundledContext = Bundle.main.resourceURL?
-            .appendingPathComponent("claude-context"),
-              fm.fileExists(atPath: bundledContext.path) else { return false }
-
-        // Only deploy if the context directory doesn't exist yet
+        // If context directory already exists, just check staleness
         if fm.fileExists(atPath: deployedPath.path) {
             if isStale {
                 logger.info("Deployed context is from a different build. Use Settings > Reset Context to update.")
@@ -45,32 +45,70 @@ enum ClaudeContextDeployer {
             return true
         }
 
-        try? fm.createDirectory(at: deployedPath.deletingLastPathComponent(),
-                                withIntermediateDirectories: true)
-
+        // Create the context directory
         do {
-            try fm.copyItem(at: bundledContext, to: deployedPath)
+            try fm.createDirectory(at: deployedPath, withIntermediateDirectories: true)
         } catch {
-            logger.warning("Failed to deploy context: \(error.localizedDescription)")
+            logger.warning("Failed to create context directory: \(error.localizedDescription)")
             return false
         }
 
-        // Move skills/ → .claude/skills/ (Xcode strips hidden dirs from bundles)
-        let bundledSkills = deployedPath.appendingPathComponent("skills")
-        if fm.fileExists(atPath: bundledSkills.path) {
-            let dotClaude = deployedPath.appendingPathComponent(".claude/skills")
-            try? fm.createDirectory(at: dotClaude.deletingLastPathComponent(),
-                                    withIntermediateDirectories: true)
-            try? fm.moveItem(at: bundledSkills, to: dotClaude)
+        // Copy bundled CLAUDE.md
+        if let bundledContext = Bundle.main.resourceURL?.appendingPathComponent("claude-context") {
+            let bundledClaudeMd = bundledContext.appendingPathComponent("CLAUDE.md")
+            if fm.fileExists(atPath: bundledClaudeMd.path) {
+                let destClaudeMd = deployedPath.appendingPathComponent("CLAUDE.md")
+                try? fm.copyItem(at: bundledClaudeMd, to: destClaudeMd)
+            }
         }
 
-        // Stamp the version so we can detect staleness later
+        // Clone starter repos in the background
+        cloneStarterRepos()
+
+        // Stamp the version
         writeVersionStamp()
 
         return true
     }
 
-    /// Replace deployed context with fresh copy from the app bundle.
+    /// Clone starter skills and wiki repos into the context directory.
+    private static func cloneStarterRepos() {
+        let skillsPath = deployedPath.appendingPathComponent("skills")
+        let wikiPath = deployedPath.appendingPathComponent("wiki")
+
+        // Clone skills repo (contains .claude/skills/ structure)
+        if !FileManager.default.fileExists(atPath: skillsPath.path) {
+            gitClone(repo: starterSkillsRepo, to: skillsPath)
+        }
+
+        // Clone wiki repo (contains reference documents)
+        if !FileManager.default.fileExists(atPath: wikiPath.path) {
+            gitClone(repo: starterWikiRepo, to: wikiPath)
+        }
+    }
+
+    /// Clone a git repo to a local path.
+    private static func gitClone(repo: String, to localPath: URL) {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
+        process.arguments = ["clone", repo, localPath.path]
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+            if process.terminationStatus == 0 {
+                logger.info("Cloned \(repo) to \(localPath.path)")
+            } else {
+                logger.warning("Failed to clone \(repo) (exit code \(process.terminationStatus))")
+            }
+        } catch {
+            logger.warning("Failed to clone \(repo): \(error.localizedDescription)")
+        }
+    }
+
+    /// Replace deployed context with fresh copy.
     /// Returns true on success.
     @discardableResult
     static func resetToDefaults() -> Bool {

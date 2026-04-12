@@ -155,7 +155,7 @@ private struct ContextSection: View {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(AppColors.gold)
                         .font(.system(size: 11))
-                    Text("Context was deployed from an older build. Press Reset to Defaults to update to the latest skills.")
+                    Text("Context was deployed from an older build. Press Reset to Defaults to re-clone starter repos.")
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                 }
