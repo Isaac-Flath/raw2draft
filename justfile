@@ -55,3 +55,11 @@ refresh: build install reset-context
 # Run tests
 test:
     xcodebuild -project Raw2Draft.xcodeproj -scheme Raw2Draft -configuration Debug test 2>&1 | tail -20
+
+# Upload docs to S3 for isaacflath.com/raw2draft
+docs-publish:
+    uv run scripts/sync-docs-to-s3.py
+
+# Preview docs upload (dry run)
+docs-publish-dry:
+    uv run scripts/sync-docs-to-s3.py --dry-run

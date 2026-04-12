@@ -1,3 +1,9 @@
+---
+title: Raw2Draft
+description: A markdown editor with an integrated Claude Code terminal for macOS.
+order: 1
+---
+
 # Raw2Draft
 
 > [!WARNING]
@@ -5,11 +11,9 @@
 
 Isaac Flath's personal writing tool. A markdown editor with an integrated Claude Code terminal for macOS.
 
-Will it work for you?  Should you use it?  Probably not!  My recommendation is to poke around and explore, then use this repo as context to make your own tool that works just how you like.
+In my daily use, the agent skills are paired with a personal knowledge base (via [agentkb](https://github.com/Isaac-Flath/agentkb)) containing writing style guides, taste decisions, critique patterns, and domain expertise. That knowledge base is what makes the agent output good — the skills are just procedures. Without a knowledge base, the skills will work but the results will feel generic.
 
-In my daily use, the agent skills are paired with a personal knowledge base (via [agentkb](https://github.com/Isaac-Flath/agentkb)) containing writing style guides, taste decisions, critique patterns, and domain expertise. That knowledge base is what makes the agent output good.  The skills are just procedures. Without a knowledge base, the skills will work but the results will feel generic.
-
-Any knowledge base works.  agentkb, a wiki directory, a set of markdown files, or a well-written CLAUDE.md. The key is giving the agent context about *how* to do things well, not just *what* to do.
+Any knowledge base works — agentkb, a wiki directory, a set of markdown files, or a well-written CLAUDE.md. The key is giving the agent context about *how* to do things well, not just *what* to do.
 
 ## Installation
 
