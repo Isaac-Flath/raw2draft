@@ -201,13 +201,19 @@ private struct ContextSection: View {
                 .font(.system(size: 12, weight: .medium))
                 .frame(width: 40, alignment: .leading)
 
-            Text(path.wrappedValue.isEmpty ? defaultPath : path.wrappedValue)
+            TextField(defaultPath, text: path)
                 .font(.system(size: 11, design: .monospaced))
-                .foregroundStyle(path.wrappedValue.isEmpty ? .tertiary : .secondary)
+                .textFieldStyle(.roundedBorder)
                 .lineLimit(1)
                 .truncationMode(.middle)
-
-            Spacer()
+                .onChange(of: path.wrappedValue) {
+                    let expanded = NSString(string: path.wrappedValue).expandingTildeInPath
+                    if path.wrappedValue.isEmpty {
+                        UserDefaults.standard.removeObject(forKey: defaultsKey)
+                    } else if FileManager.default.fileExists(atPath: expanded) {
+                        UserDefaults.standard.set(expanded, forKey: defaultsKey)
+                    }
+                }
 
             if !path.wrappedValue.isEmpty {
                 Button("Clear") {
@@ -222,6 +228,7 @@ private struct ContextSection: View {
                 panel.canChooseFiles = false
                 panel.canChooseDirectories = true
                 panel.allowsMultipleSelection = false
+                panel.showsHiddenFiles = true
                 panel.message = "Select custom \(label.lowercased()) directory"
                 if panel.runModal() == .OK, let url = panel.url {
                     path.wrappedValue = url.path
