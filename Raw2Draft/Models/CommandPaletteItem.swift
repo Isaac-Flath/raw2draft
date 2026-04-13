@@ -76,25 +76,52 @@ enum CommandPaletteProvider {
     // MARK: - Skills
 
     private static func skills() -> [CommandPaletteItem] {
-        let skillsDir = ClaudeContextDeployer.skillsPath
-            .appendingPathComponent(".claude/skills")
         let fm = FileManager.default
+        let baseDir = ClaudeContextDeployer.skillsPath
+        var items: [CommandPaletteItem] = []
 
-        guard let entries = try? fm.contentsOfDirectory(atPath: skillsDir.path) else { return [] }
+        for dir in findSkillsDirs(under: baseDir) {
+            guard let entries = try? fm.contentsOfDirectory(atPath: dir.path) else { continue }
+            for entry in entries.sorted() {
+                let skillFile = dir.appendingPathComponent(entry).appendingPathComponent("SKILL.md")
+                guard let content = try? String(contentsOf: skillFile, encoding: .utf8) else { continue }
 
-        return entries.sorted().compactMap { entry in
-            let skillFile = skillsDir.appendingPathComponent(entry).appendingPathComponent("SKILL.md")
-            guard let content = try? String(contentsOf: skillFile, encoding: .utf8) else { return nil }
-
-            let (name, description) = parseFrontmatter(content)
-            let command = "/\(name ?? entry)"
-            return CommandPaletteItem(
-                name: name ?? entry,
-                subtitle: description ?? command,
-                kind: .skill(command: command),
-                category: "Skills"
-            )
+                let (name, description) = parseFrontmatter(content)
+                let command = "/\(name ?? entry)"
+                items.append(CommandPaletteItem(
+                    name: name ?? entry,
+                    subtitle: description ?? command,
+                    kind: .skill(command: command),
+                    category: "Skills"
+                ))
+            }
         }
+        return items
+    }
+
+    /// Find all `.claude/skills` directories under a base path.
+    /// Handles both direct repos (base/.claude/skills) and nested repos (base/*/.claude/skills).
+    private static func findSkillsDirs(under base: URL) -> [URL] {
+        let fm = FileManager.default
+        var results: [URL] = []
+
+        // Direct: base/.claude/skills
+        let direct = base.appendingPathComponent(".claude/skills")
+        if fm.fileExists(atPath: direct.path) {
+            results.append(direct)
+        }
+
+        // Nested: base/*/.claude/skills (for multi-repo layouts like agentkb)
+        if let children = try? fm.contentsOfDirectory(atPath: base.path) {
+            for child in children where !child.hasPrefix(".") {
+                let nested = base.appendingPathComponent(child).appendingPathComponent(".claude/skills")
+                if fm.fileExists(atPath: nested.path) {
+                    results.append(nested)
+                }
+            }
+        }
+
+        return results
     }
 
     private static func parseFrontmatter(_ content: String) -> (name: String?, description: String?) {
