@@ -9,13 +9,19 @@ order: 1
 > [!WARNING]
 > This app runs Claude Code with `--dangerously-skip-permissions` (YOLO mode). All AI-initiated actions (file writes, shell commands, etc.) are automatically approved without prompting. Use at your own risk and only with content you trust.
 
-Isaac Flath's personal writing tool. A markdown editor with an integrated Claude Code terminal for macOS.
+A markdown editor with an integrated Claude Code terminal for macOS. I built this for my own writing workflow.
 
-Will it work for you? Should you use it? Probably not! My recommendation is to poke around and explore, then use this repo as context to make your own tool that works just how you like.
+Will it work for you? Probably not out of the box. My recommendation is to poke around, then use this repo as context to build your own tool that works the way you like.
 
-In my daily use, the agent skills are paired with a personal knowledge base (via [agentkb](https://github.com/Isaac-Flath/agentkb)) containing writing style guides, taste decisions, critique patterns, and domain expertise. That knowledge base is what makes the agent output good. The skills are just procedures. Without a knowledge base, the skills will work but the results will feel generic.
+## The starter skills and knowledge base
 
-Any knowledge base works. agentkb, a wiki directory, a set of markdown files, or a well-written CLAUDE.md. The key is giving the agent context about *how* to do things well, not just *what* to do.
+Raw2Draft ships with a minimal set of starter skills and a starter knowledge base. These exist so you can see how things fit together. They are not what I use. I point Raw2Draft at my own skills and knowledge base, built up over time, and that is what makes the agent output good.
+
+Skills are procedures. They tell the agent *what* to do. A knowledge base tells it *how* to do things well: writing style guides, taste decisions, critique patterns, domain expertise. Without that context, skills produce generic results.
+
+Any knowledge base works. A wiki directory, a set of markdown files, a well-written CLAUDE.md. I manage mine with a tool called Agent KB (coming soon).
+
+Fork the starter repos and make them your own, or point Raw2Draft at your own repos in Settings. The starters are scaffolding.
 
 ## Installation
 
@@ -37,7 +43,7 @@ This compiles a Release build, copies it to `/Applications/Raw2Draft.app`, and i
 
 ## Features
 
-This is a personal tool that I build for myself. Some things are well-tested and used daily, some are experimental, and some are brand new and barely tested. It all ships together. Use what works for you.
+This is a personal tool. Some things are well-tested and used daily, some are experimental, some are brand new and barely tested. It all ships together. Use what works for you.
 
 - Split-pane markdown editor (CodeMirror 6) + Claude Code terminal
 - Content Studio mode for managing blog posts and content projects
@@ -106,7 +112,7 @@ Post content here...
 
 You can include any additional frontmatter fields your blog needs (e.g., `description`, `categories`, `author`, `image`). The app ignores them but preserves them in the file.
 
-A post with a `date` in the future and `draft: false` shows as "scheduled" (indigo indicator). Otherwise it's "published" (green).
+A post with a future `date` and `draft: false` shows as "scheduled" (indigo indicator). Otherwise it's "published" (green).
 
 ## How Claude Code integration works
 
@@ -114,18 +120,18 @@ There is no special Claude Code integration. The app runs a terminal and launche
 
 ## Skills and knowledge base
 
-On first launch, Raw2Draft clones two public starter repos into `~/.raw2draft/context/`:
+On first launch, Raw2Draft clones two minimal starter repos into `~/.raw2draft/context/`:
 
-- **[agent-starter-skills](https://github.com/Isaac-Flath/agent-starter-skills)**: Agent skills for content creation, transcription, social media, video editing, and more
-- **[agent-starter-wiki](https://github.com/Isaac-Flath/agent-starter-wiki)**: Writing style guides and reference documents
+- **[agent-starter-skills](https://github.com/Isaac-Flath/agent-starter-skills)**: A small set of skills for content creation, transcription, social media, and video editing
+- **[agent-starter-wiki](https://github.com/Isaac-Flath/agent-starter-wiki)**: Basic writing style guides and reference documents
 
-These are passed to Claude Code via `--add-dir` so skills are available as `/slash-commands` and reference docs are in context.
+These are passed to Claude Code via `--add-dir` so skills are available as `/slash-commands` and reference docs are in context. They are intentionally minimal: enough to see how things work, not enough to produce great output on their own.
 
 ### Customizing
 
-Fork the starter repos and edit them to build your own skill set and knowledge base. The app won't overwrite your changes on subsequent launches.
+Fork the starter repos or point Raw2Draft at your own repos in Settings. That's what I do. My personal skills and knowledge base are what make the agent useful. The starters are scaffolding.
 
-For a richer setup, install [agentkb](https://github.com/Isaac-Flath/agentkb) to manage your skills and knowledge base with semantic search, git sync, and chat history indexing.
+The app won't overwrite your local changes on subsequent launches, so you can also edit the cloned repos in place at `~/.raw2draft/context/`.
 
 ### Resetting
 
@@ -161,4 +167,4 @@ draft --version # Show installed build number
 
 ## License
 
-MIT — see [LICENSE](https://github.com/Isaac-Flath/raw2draft/blob/main/LICENSE) for details.
+MIT. See [LICENSE](https://github.com/Isaac-Flath/raw2draft/blob/main/LICENSE) for details.
