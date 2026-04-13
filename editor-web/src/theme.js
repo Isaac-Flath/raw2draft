@@ -139,6 +139,34 @@ export const editorTheme = EditorView.theme({
     fontStyle: "inherit",
   },
 
+  // Tables — clean grid styling in the editor
+  ".cm-table-row": {
+    fontFamily: "'JetBrains Mono', 'SF Mono', monospace",
+    fontSize: "0.85em",
+    lineHeight: "1.7",
+    whiteSpace: "pre",
+    overflowWrap: "normal",
+    wordBreak: "keep-all",
+  },
+  ".cm-table-header": {
+    fontFamily: "'JetBrains Mono', 'SF Mono', monospace",
+    fontSize: "0.85em",
+    lineHeight: "1.7",
+    fontWeight: "600",
+    whiteSpace: "pre",
+    overflowWrap: "normal",
+    wordBreak: "keep-all",
+  },
+  ".cm-table-separator": {
+    fontFamily: "'JetBrains Mono', 'SF Mono', monospace",
+    fontSize: "0.85em",
+    lineHeight: "1.7",
+    color: "var(--cm-formatting, rgba(120, 113, 108, 0.4))",
+    whiteSpace: "pre",
+    overflowWrap: "normal",
+    wordBreak: "keep-all",
+  },
+
   // Focus mode: dim all lines except the active paragraph
   "&[data-focus-mode='true'] .cm-line": {
     opacity: "0.3",

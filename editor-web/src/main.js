@@ -12,6 +12,7 @@ import { focusMode } from "./focus-mode.js";
 import { wordCountPlugin } from "./word-count.js";
 import { frontmatterFolding } from "./frontmatter.js";
 import { boldCommand, italicCommand, linkCommand } from "./formatting.js";
+import { tableEditing, insertTableCommand } from "./table.js";
 import { createPreviewPane, updatePreview, setPreviewVisible, syncPreviewScroll } from "./preview.js";
 import { createBridge } from "./bridge.js";
 
@@ -37,6 +38,7 @@ function createEditor(parent) {
       focusMode(),
       wordCountPlugin,
       frontmatterFolding(),
+      tableEditing(),
       EditorView.contentAttributes.of({ spellcheck: "true" }),
       keymap.of([
         ...closeBracketsKeymap,
