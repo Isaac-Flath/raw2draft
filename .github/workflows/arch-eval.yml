@@ -1,0 +1,121 @@
+name: Architectural Evaluation
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Runs every Friday at 18:00 UTC
+    - cron: '0 18 * * 5'
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install anthropic
+
+      - name: Collect source files and call Claude API
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python3 - <<'PYEOF'
+          import os
+          import json
+          import anthropic
+
+          # ------------------------------------------------------------------ #
+          # 1. Collect source files
+          #    Includes: Swift (native app), JavaScript/TypeScript (web editor),
+          #    HTML (editor templates), and shell scripts (CLI wrapper).
+          # ------------------------------------------------------------------ #
+          EXTENSIONS = {'.swift', '.js', '.ts', '.jsx', '.tsx', '.html', '.sh'}
+          SKIP_DIRS  = {'.git', '.build', 'build', 'node_modules', 'DerivedData'}
+
+          def collect_sources(root: str) -> dict[str, str]:
+              sources = {}
+              for dirpath, dirnames, filenames in os.walk(root):
+                  dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
+                  for fname in filenames:
+                      _, ext = os.path.splitext(fname)
+                      if ext not in EXTENSIONS:
+                          continue
+                      fpath = os.path.join(dirpath, fname)
+                      rel   = os.path.relpath(fpath, root)
+                      try:
+                          with open(fpath, encoding='utf-8', errors='replace') as f:
+                              sources[rel] = f.read()
+                      except OSError:
+                          pass
+              return sources
+
+          sources = collect_sources('.')
+
+          # ------------------------------------------------------------------ #
+          # 2. Build the files block (truncate at file boundaries if needed)
+          #    and load the prompt template from .github/prompts/arch-eval.md
+          # ------------------------------------------------------------------ #
+          MAX_CHARS = 150_000
+          included: list[tuple[str, str]] = []
+          total = 0
+          for path, content in sorted(sources.items()):
+              chunk = f'=== {path} ===\n{content}'
+              if total + len(chunk) > MAX_CHARS:
+                  break
+              included.append(chunk)
+              total += len(chunk)
+
+          omitted = len(sources) - len(included)
+          files_block = '\n\n'.join(included)
+          if omitted:
+              files_block += f'\n\n[... {omitted} file(s) omitted due to size limit ...]'
+
+          with open('.github/prompts/arch-eval.md', encoding='utf-8') as f:
+              prompt = f.read().replace('{files_block}', files_block)
+
+          # ------------------------------------------------------------------ #
+          # 3. Call Claude
+          # ------------------------------------------------------------------ #
+          client = anthropic.Anthropic()
+          message = client.messages.create(
+              model='claude-opus-4-5',
+              max_tokens=4096,
+              messages=[{'role': 'user', 'content': prompt}],
+          )
+
+          review = message.content[0].text
+
+          # ------------------------------------------------------------------ #
+          # 4. Write output for next step
+          # ------------------------------------------------------------------ #
+          with open('/tmp/arch_review.md', 'w') as f:
+              f.write(review)
+
+          print('Architecture review generated successfully.')
+          print(f'Tokens used – input: {message.usage.input_tokens}, output: {message.usage.output_tokens}')
+          PYEOF
+
+      - name: Open GitHub issue with the review
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REVIEW=$(cat /tmp/arch_review.md)
+          DATE=$(date -u '+%Y-%m-%d')
+          TITLE="Architectural Evaluation – ${DATE}"
+
+          gh issue create \
+            --title "$TITLE" \
+            --body "$REVIEW" \
+            --label "architecture" || \
+          gh issue create \
+            --title "$TITLE" \
+            --body "$REVIEW"
