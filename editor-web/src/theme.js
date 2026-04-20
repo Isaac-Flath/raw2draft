@@ -6,7 +6,7 @@ export const editorTheme = EditorView.theme({
   "&": {
     height: "100%",
     fontSize: "var(--editor-font-size, 18px)",
-    fontFamily: "var(--editor-font, 'Tiempos Text'), Georgia, serif",
+    fontFamily: "var(--editor-font, 'Lora'), Georgia, serif",
     backgroundColor: "transparent",
     WebkitFontSmoothing: "antialiased",
   },
@@ -40,11 +40,11 @@ export const editorTheme = EditorView.theme({
     borderLeftWidth: "2px",
   },
 
-  // Live preview heading styles — National 2, matching website sizes
-  ".cm-heading-1": { fontFamily: "'National 2', -apple-system, sans-serif", fontSize: "2.25rem", fontWeight: "700", lineHeight: "1.2", color: "var(--cm-text, rgb(17, 24, 39))" },
-  ".cm-heading-2": { fontFamily: "'National 2', -apple-system, sans-serif", fontSize: "2rem", fontWeight: "700", lineHeight: "1.3", color: "var(--cm-text, rgb(17, 24, 39))" },
-  ".cm-heading-3": { fontFamily: "'National 2', -apple-system, sans-serif", fontSize: "1.5rem", fontWeight: "700", lineHeight: "1.3", color: "var(--cm-text, rgb(17, 24, 39))" },
-  ".cm-heading-4": { fontFamily: "'National 2', -apple-system, sans-serif", fontSize: "1.125rem", fontWeight: "600", lineHeight: "1.3", color: "var(--cm-text, rgb(17, 24, 39))" },
+  // Live preview heading styles — Inter, matching website sizes
+  ".cm-heading-1": { fontFamily: "'Inter', -apple-system, sans-serif", fontSize: "2.25rem", fontWeight: "700", lineHeight: "1.2", color: "var(--cm-text, rgb(17, 24, 39))" },
+  ".cm-heading-2": { fontFamily: "'Inter', -apple-system, sans-serif", fontSize: "2rem", fontWeight: "700", lineHeight: "1.3", color: "var(--cm-text, rgb(17, 24, 39))" },
+  ".cm-heading-3": { fontFamily: "'Inter', -apple-system, sans-serif", fontSize: "1.5rem", fontWeight: "700", lineHeight: "1.3", color: "var(--cm-text, rgb(17, 24, 39))" },
+  ".cm-heading-4": { fontFamily: "'Inter', -apple-system, sans-serif", fontSize: "1.125rem", fontWeight: "600", lineHeight: "1.3", color: "var(--cm-text, rgb(17, 24, 39))" },
 
   // Live preview inline styles
   ".cm-strong": { fontWeight: "700" },
@@ -115,6 +115,30 @@ export const editorTheme = EditorView.theme({
     maxWidth: "100%",
     borderRadius: "6px",
     margin: "8px 0",
+  },
+
+  // Mermaid / D2 live preview
+  ".cm-mermaid-widget, .cm-d2-widget": {
+    display: "block",
+    padding: "16px",
+    margin: "8px 0 16px",
+    textAlign: "center",
+    backgroundColor: "var(--cm-code-bg, rgba(79, 70, 229, 0.06))",
+    borderRadius: "8px",
+    overflowX: "auto",
+    fontFamily: "'Inter', -apple-system, sans-serif",
+    fontSize: "13px",
+    color: "var(--cm-formatting, rgba(120, 113, 108, 0.6))",
+  },
+  ".cm-mermaid-widget svg, .cm-d2-widget svg": {
+    maxWidth: "100%",
+    height: "auto",
+  },
+  ".cm-mermaid-error": {
+    color: "#dc2626",
+    textAlign: "left",
+    fontFamily: "'JetBrains Mono', 'SF Mono', monospace",
+    whiteSpace: "pre-wrap",
   },
 
   // Frontmatter — compact monospace block, overrides body typography

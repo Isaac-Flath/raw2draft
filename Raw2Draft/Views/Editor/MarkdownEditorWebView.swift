@@ -13,6 +13,7 @@ struct MarkdownEditorWebView: NSViewRepresentable {
     let socialMode: Bool
     let showPreview: Bool
     let showLineNumbers: Bool
+    let baseDirectory: URL?
     @Binding var scrollToOffset: Int?
     @Binding var scrollToHeadingIndex: Int?
     let onContentChanged: (String) -> Void
@@ -30,12 +31,27 @@ struct MarkdownEditorWebView: NSViewRepresentable {
         let config = WKWebViewConfiguration()
         config.userContentController.add(context.coordinator, name: "editor")
 
+        // Custom URL scheme for loading arbitrary local assets referenced by
+        // the active markdown file (images, etc.). Keeps the WebView's normal
+        // file:// access scoped to the bundle so fonts/same-origin resources
+        // keep working.
+        config.setURLSchemeHandler(AssetSchemeHandler(), forURLScheme: "r2dasset")
+
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.setValue(false, forKey: "drawsBackground")
         webView.navigationDelegate = context.coordinator
         context.coordinator.webView = webView
 
-        // Load the bundled editor HTML
+        // Enable Safari Web Inspector (Develop menu → Raw2Draft → index.html)
+        // on macOS 13.3+. Safe to leave on in release — costs nothing unless
+        // the user opens Safari's Develop menu.
+        if #available(macOS 13.3, *) {
+            webView.isInspectable = true
+        }
+
+        // Load the bundled editor HTML. Scope read access to the Resources
+        // directory so bundled fonts/assets keep same-origin semantics.
+        // User-project assets are served via the r2dasset:// scheme above.
         if let url = Bundle.main.url(forResource: "index", withExtension: "html") {
             webView.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
         }
@@ -84,6 +100,12 @@ struct MarkdownEditorWebView: NSViewRepresentable {
             webView.evaluateJavaScript("window.editorBridge.setLineNumbers(\(showLineNumbers))")
         }
 
+        // Update base directory so the editor can resolve relative asset paths.
+        if coordinator.isReady && baseDirectory?.path != coordinator.lastBaseDirectory?.path {
+            coordinator.lastBaseDirectory = baseDirectory
+            coordinator.sendBaseDirectory(baseDirectory, to: webView)
+        }
+
         // Scroll to offset (e.g., from heading outline)
         if coordinator.isReady, let offset = scrollToOffset {
             // Convert character offset to a line number for the bridge
@@ -115,11 +137,22 @@ struct MarkdownEditorWebView: NSViewRepresentable {
         var lastSocialMode = false
         var lastShowPreview = false
         var lastShowLineNumbers = false
+        var lastBaseDirectory: URL?
 
         init(parent: MarkdownEditorWebView) {
             self.parent = parent
             self.pendingContent = parent.content
             super.init()
+        }
+
+        /// Tell the JavaScript editor about the active file's absolute
+        /// directory so it can resolve relative asset paths like `images/x.png`.
+        func sendBaseDirectory(_ dir: URL?, to webView: WKWebView) {
+            if let path = dir?.path {
+                webView.evaluateJavaScript("window.editorBridge.setBaseDir('\(path.jsSingleQuoteEscaped)')")
+            } else {
+                webView.evaluateJavaScript("window.editorBridge.setBaseDir(null)")
+            }
         }
 
         /// Send content to the JavaScript editor with error logging.
@@ -187,6 +220,12 @@ struct MarkdownEditorWebView: NSViewRepresentable {
                 lastShowLineNumbers = parent.showLineNumbers
                 webView?.evaluateJavaScript("window.editorBridge.setLineNumbers(\(parent.showLineNumbers))")
 
+                // Set initial base directory
+                lastBaseDirectory = parent.baseDirectory
+                if let webView {
+                    sendBaseDirectory(parent.baseDirectory, to: webView)
+                }
+
             case "contentChanged":
                 if let content = body["content"] as? String {
                     lastSentContent = content
@@ -211,6 +250,21 @@ struct MarkdownEditorWebView: NSViewRepresentable {
             case "sendToTerminal":
                 if let text = body["text"] as? String {
                     parent.onSendToTerminal(text)
+                }
+
+            case "log":
+                let level = body["level"] as? String ?? "log"
+                let msg = body["msg"] as? String ?? ""
+                if level == "error" {
+                    logger.error("[JS] \(msg, privacy: .public)")
+                } else {
+                    logger.warning("[JS \(level, privacy: .public)] \(msg, privacy: .public)")
+                }
+
+            case "renderD2":
+                if let code = body["code"] as? String,
+                   let requestId = body["requestId"] as? String {
+                    renderD2Diagram(code: code, requestId: requestId)
                 }
 
             case "uploadImage":
@@ -347,5 +401,135 @@ extension MarkdownEditorWebView.Coordinator {
 
     private func replaceUploadPlaceholder(_ placeholder: String, with replacement: String) {
         webView?.evaluateJavaScript("window.editorImageUploaded('\(placeholder.jsSingleQuoteEscaped)', '\(replacement.jsSingleQuoteEscaped)')")
+    }
+
+    /// Render a D2 diagram by piping source through the `d2` CLI (`d2 - -`).
+    /// Returns the SVG (or an error) to JS via `window.d2Rendered`.
+    func renderD2Diagram(code: String, requestId: String) {
+        let d2Path = ["/opt/homebrew/bin/d2", "/usr/local/bin/d2", "/usr/bin/d2"]
+            .first { FileManager.default.isExecutableFile(atPath: $0) }
+
+        guard let d2Path else {
+            replyD2(requestId: requestId, ok: false, payload: "d2 CLI not found — install with `brew install d2`")
+            return
+        }
+
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: d2Path)
+            process.arguments = ["-", "-"]
+
+            let stdin = Pipe()
+            let stdout = Pipe()
+            let stderr = Pipe()
+            process.standardInput = stdin
+            process.standardOutput = stdout
+            process.standardError = stderr
+
+            var env = ProcessInfo.processInfo.environment
+            env["PATH"] = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+            process.environment = env
+
+            do {
+                try process.run()
+                if let data = code.data(using: .utf8) {
+                    try stdin.fileHandleForWriting.write(contentsOf: data)
+                }
+                try stdin.fileHandleForWriting.close()
+                process.waitUntilExit()
+
+                let svgData = stdout.fileHandleForReading.readDataToEndOfFile()
+                let errData = stderr.fileHandleForReading.readDataToEndOfFile()
+
+                if process.terminationStatus == 0, !svgData.isEmpty {
+                    let svg = String(data: svgData, encoding: .utf8) ?? ""
+                    self?.replyD2(requestId: requestId, ok: true, payload: svg)
+                } else {
+                    let msg = String(data: errData, encoding: .utf8) ?? "d2 exited with status \(process.terminationStatus)"
+                    self?.replyD2(requestId: requestId, ok: false, payload: msg.trimmingCharacters(in: .whitespacesAndNewlines))
+                }
+            } catch {
+                self?.replyD2(requestId: requestId, ok: false, payload: error.localizedDescription)
+            }
+        }
+    }
+
+    private func replyD2(requestId: String, ok: Bool, payload: String) {
+        DispatchQueue.main.async { [weak self] in
+            let key = ok ? "svg" : "error"
+            // Use JSON to safely carry arbitrary SVG/error text into JS.
+            let result: [String: Any] = ["ok": ok, key: payload]
+            guard let data = try? JSONSerialization.data(withJSONObject: result),
+                  let json = String(data: data, encoding: .utf8) else { return }
+            let reqEsc = requestId.jsSingleQuoteEscaped
+            self?.webView?.evaluateJavaScript("window.d2Rendered('\(reqEsc)', \(json))")
+        }
+    }
+}
+
+// MARK: - r2dasset:// URL scheme handler
+
+/// Serves local files referenced by the active markdown file (relative images,
+/// etc.) over a custom URL scheme so they aren't subject to file:// origin
+/// restrictions imposed on the bundled editor page.
+///
+/// URL form: `r2dasset:///absolute/path/to/asset.png` — the path portion is
+/// the absolute filesystem path (URL-encoded).
+final class AssetSchemeHandler: NSObject, WKURLSchemeHandler {
+    func webView(_ webView: WKWebView, start urlSchemeTask: WKURLSchemeTask) {
+        guard let url = urlSchemeTask.request.url else {
+            urlSchemeTask.didFailWithError(URLError(.badURL))
+            return
+        }
+
+        // The path component is the absolute filesystem path of the asset.
+        // `url.path` already percent-decodes, which is what we want.
+        let path = url.path
+        let fileURL = URL(fileURLWithPath: path)
+
+        var isDir: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: path, isDirectory: &isDir), !isDir.boolValue else {
+            urlSchemeTask.didFailWithError(URLError(.fileDoesNotExist))
+            return
+        }
+
+        do {
+            let data = try Data(contentsOf: fileURL)
+            let mime = mimeType(forExtension: fileURL.pathExtension)
+            let headers = [
+                "Content-Type": mime,
+                "Content-Length": String(data.count),
+                "Access-Control-Allow-Origin": "*",
+            ]
+            guard let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: headers) else {
+                urlSchemeTask.didFailWithError(URLError(.cannotParseResponse))
+                return
+            }
+            urlSchemeTask.didReceive(response)
+            urlSchemeTask.didReceive(data)
+            urlSchemeTask.didFinish()
+        } catch {
+            urlSchemeTask.didFailWithError(error)
+        }
+    }
+
+    func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {}
+
+    private func mimeType(forExtension ext: String) -> String {
+        switch ext.lowercased() {
+        case "png": return "image/png"
+        case "jpg", "jpeg": return "image/jpeg"
+        case "gif": return "image/gif"
+        case "webp": return "image/webp"
+        case "svg": return "image/svg+xml"
+        case "avif": return "image/avif"
+        case "bmp": return "image/bmp"
+        case "ico": return "image/x-icon"
+        case "heic": return "image/heic"
+        case "mp4": return "video/mp4"
+        case "webm": return "video/webm"
+        case "mov": return "video/quicktime"
+        default: return "application/octet-stream"
+        }
     }
 }

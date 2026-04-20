@@ -26,6 +26,32 @@ final class EditorViewModel: ErrorHandling {
         return files.first { $0.path == activeFile }
     }
 
+    /// Absolute directory URL of the currently active markdown file, used by
+    /// the editor to resolve relative asset paths (e.g. `images/foo.png`).
+    var activeFileDirectory: URL? {
+        guard let activeFile else { return nil }
+
+        // External file — activeFile is an absolute path.
+        if openExternalFiles.contains(where: { $0.path == activeFile }) {
+            return URL(fileURLWithPath: activeFile).deletingLastPathComponent()
+        }
+
+        // Linked project file (external post linked to a project) — resolve
+        // relative path against the linked project root.
+        if activeProjectId == nil, let linkedId = linkedProjectId {
+            let root = projectService.resolveProjectRoot(linkedId)
+            return root.appendingPathComponent(activeFile).deletingLastPathComponent()
+        }
+
+        // Normal project file.
+        if let projectId = activeProjectId {
+            let root = projectService.resolveProjectRoot(projectId)
+            return root.appendingPathComponent(activeFile).deletingLastPathComponent()
+        }
+
+        return nil
+    }
+
     // MARK: - Private
     private(set) var activeProjectId: String?
     private var autosaveTask: Task<Void, Never>?

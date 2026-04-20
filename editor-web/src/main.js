@@ -7,7 +7,26 @@ import { syntaxHighlighting } from "@codemirror/language";
 import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
 
 import { editorTheme, markdownHighlighting } from "./theme.js";
-import { livePreview } from "./live-preview.js";
+
+// Forward browser errors to the Swift host so they show up in Xcode's console
+// (open the Safari Web Inspector for richer debugging: Develop → <App> → index.html).
+function postLog(level, args) {
+  try {
+    const msg = args.map((a) => {
+      if (a instanceof Error) return `${a.name}: ${a.message}\n${a.stack || ""}`;
+      if (typeof a === "object") { try { return JSON.stringify(a); } catch { return String(a); } }
+      return String(a);
+    }).join(" ");
+    window.webkit?.messageHandlers?.editor?.postMessage({ type: "log", level, msg });
+  } catch { /* no-op */ }
+}
+window.addEventListener("error", (e) => postLog("error", [e.message, e.filename + ":" + e.lineno, e.error || ""]));
+window.addEventListener("unhandledrejection", (e) => postLog("error", ["unhandledrejection", e.reason]));
+const origErr = console.error.bind(console);
+console.error = (...args) => { postLog("error", args); origErr(...args); };
+const origWarn = console.warn.bind(console);
+console.warn = (...args) => { postLog("warn", args); origWarn(...args); };
+import { livePreview, mermaidBlocks, wireMermaidThemeRefresh } from "./live-preview.js";
 import { focusMode } from "./focus-mode.js";
 import { wordCountPlugin } from "./word-count.js";
 import { frontmatterFolding } from "./frontmatter.js";
@@ -15,6 +34,9 @@ import { boldCommand, italicCommand, linkCommand } from "./formatting.js";
 import { tableEditing, insertTableCommand } from "./table.js";
 import { createPreviewPane, updatePreview, setPreviewVisible, syncPreviewScroll } from "./preview.js";
 import { createBridge } from "./bridge.js";
+import { resolveD2Render } from "./d2-renderer.js";
+
+window.d2Rendered = (requestId, result) => resolveD2Render(requestId, result);
 
 let view;
 let bridge;
@@ -35,6 +57,7 @@ function createEditor(parent) {
       editorTheme,
       syntaxHighlighting(markdownHighlighting),
       livePreview(),
+      mermaidBlocks,
       focusMode(),
       wordCountPlugin,
       frontmatterFolding(),
@@ -68,6 +91,7 @@ function createEditor(parent) {
 
   view = new EditorView({ state, parent });
   bridge = createBridge(view);
+  wireMermaidThemeRefresh(view);
 
   // Add preview pane after editor
   const container = parent.parentElement;

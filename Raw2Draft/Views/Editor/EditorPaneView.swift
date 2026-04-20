@@ -53,6 +53,7 @@ struct EditorPaneView: View {
                     socialMode: socialMode,
                     showPreview: showPreview,
                     showLineNumbers: showLineNumbers,
+                    baseDirectory: viewModel.editor.activeFileDirectory,
                     scrollToOffset: $scrollToOffset,
                     scrollToHeadingIndex: $scrollToHeadingIndex,
                     onContentChanged: { viewModel.editor.updateContent($0) },
