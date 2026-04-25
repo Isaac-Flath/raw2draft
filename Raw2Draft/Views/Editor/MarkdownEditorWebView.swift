@@ -403,7 +403,10 @@ extension MarkdownEditorWebView.Coordinator {
         webView?.evaluateJavaScript("window.editorImageUploaded('\(placeholder.jsSingleQuoteEscaped)', '\(replacement.jsSingleQuoteEscaped)')")
     }
 
-    /// Render a D2 diagram by piping source through the `d2` CLI (`d2 - -`).
+    /// Render a D2 diagram by piping source through the `d2` CLI.
+    /// Multiboard diagrams (those using `steps:`, scenarios, or layers) can't
+    /// be written to stdout, so we always render to a temp file and pass
+    /// `--animate-interval` to package step animations into a single SVG.
     /// Returns the SVG (or an error) to JS via `window.d2Rendered`.
     func renderD2Diagram(code: String, requestId: String) {
         let d2Path = ["/opt/homebrew/bin/d2", "/usr/local/bin/d2", "/usr/bin/d2"]
@@ -415,9 +418,13 @@ extension MarkdownEditorWebView.Coordinator {
         }
 
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let tempDir = FileManager.default.temporaryDirectory
+            let outURL = tempDir.appendingPathComponent("r2d-d2-\(UUID().uuidString).svg")
+            defer { try? FileManager.default.removeItem(at: outURL) }
+
             let process = Process()
             process.executableURL = URL(fileURLWithPath: d2Path)
-            process.arguments = ["-", "-"]
+            process.arguments = ["--animate-interval=1200", "-", outURL.path]
 
             let stdin = Pipe()
             let stdout = Pipe()
@@ -438,10 +445,12 @@ extension MarkdownEditorWebView.Coordinator {
                 try stdin.fileHandleForWriting.close()
                 process.waitUntilExit()
 
-                let svgData = stdout.fileHandleForReading.readDataToEndOfFile()
                 let errData = stderr.fileHandleForReading.readDataToEndOfFile()
+                _ = stdout.fileHandleForReading.readDataToEndOfFile()
 
-                if process.terminationStatus == 0, !svgData.isEmpty {
+                if process.terminationStatus == 0,
+                   let svgData = try? Data(contentsOf: outURL),
+                   !svgData.isEmpty {
                     let svg = String(data: svgData, encoding: .utf8) ?? ""
                     self?.replyD2(requestId: requestId, ok: true, payload: svg)
                 } else {
