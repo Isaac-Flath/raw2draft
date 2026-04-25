@@ -13,6 +13,27 @@ import { renderD2 } from "./d2-renderer.js";
  *   disallows block decorations coming from plugins.
  */
 
+function scheduleMeasure(view) {
+  if (!view) return;
+  requestAnimationFrame(() => {
+    try { view.requestMeasure(); } catch { /* view may have been destroyed */ }
+  });
+}
+
+function observeWidgetResize(dom, view) {
+  scheduleMeasure(view);
+  if (typeof ResizeObserver === "undefined") return;
+
+  const observer = new ResizeObserver(() => scheduleMeasure(view));
+  observer.observe(dom);
+  dom.__r2dResizeObserver = observer;
+}
+
+function disconnectWidgetResize(dom) {
+  dom.__r2dResizeObserver?.disconnect?.();
+  delete dom.__r2dResizeObserver;
+}
+
 class ImageWidget extends WidgetType {
   constructor(src, alt) {
     super();
@@ -20,19 +41,28 @@ class ImageWidget extends WidgetType {
     this.alt = alt;
   }
 
-  toDOM() {
+  toDOM(view) {
     const wrap = document.createElement("div");
     wrap.className = "cm-image-widget";
     wrap.style.display = "block";
     const img = document.createElement("img");
-    img.src = resolveAssetURL(this.src);
     img.alt = this.alt;
     img.loading = "lazy";
     img.style.maxWidth = "100%";
     img.style.height = "auto";
-    img.onerror = () => { wrap.style.display = "none"; };
+    img.onload = () => scheduleMeasure(view);
+    img.onerror = () => {
+      wrap.style.display = "none";
+      scheduleMeasure(view);
+    };
+    img.src = resolveAssetURL(this.src);
     wrap.appendChild(img);
+    observeWidgetResize(wrap, view);
     return wrap;
+  }
+
+  destroy(dom) {
+    disconnectWidgetResize(dom);
   }
 
   eq(other) {
@@ -54,14 +84,16 @@ class MermaidWidget extends WidgetType {
     return this.code === other.code;
   }
 
-  toDOM() {
+  toDOM(view) {
     const wrap = document.createElement("div");
     wrap.className = "cm-mermaid-widget";
     wrap.contentEditable = "false";
+    observeWidgetResize(wrap, view);
 
     const cached = mermaidCache.get(this.code);
     if (cached) {
       wrap.innerHTML = cached;
+      scheduleMeasure(view);
       return wrap;
     }
 
@@ -75,8 +107,13 @@ class MermaidWidget extends WidgetType {
         wrap.className = "cm-mermaid-widget cm-mermaid-error";
         wrap.textContent = `Mermaid error: ${result.error}`;
       }
+      scheduleMeasure(view);
     });
     return wrap;
+  }
+
+  destroy(dom) {
+    disconnectWidgetResize(dom);
   }
 
   ignoreEvent() {
@@ -101,14 +138,16 @@ class D2Widget extends WidgetType {
     return this.code === other.code;
   }
 
-  toDOM() {
+  toDOM(view) {
     const wrap = document.createElement("div");
     wrap.className = "cm-d2-widget";
     wrap.contentEditable = "false";
+    observeWidgetResize(wrap, view);
 
     const cached = d2Cache.get(this.code);
     if (cached) {
       wrap.innerHTML = cached;
+      scheduleMeasure(view);
       return wrap;
     }
 
@@ -121,8 +160,13 @@ class D2Widget extends WidgetType {
         wrap.className = "cm-d2-widget cm-mermaid-error";
         wrap.textContent = `D2 error: ${result.error}`;
       }
+      scheduleMeasure(view);
     });
     return wrap;
+  }
+
+  destroy(dom) {
+    disconnectWidgetResize(dom);
   }
 
   ignoreEvent() { return false; }
