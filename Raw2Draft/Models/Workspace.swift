@@ -41,7 +41,7 @@ enum WorkspaceMode: Equatable {
 
     var skillsDirectory: URL? {
         guard case .contentStudio(let root) = self else { return nil }
-        return root.appendingPathComponent(".claude/skills")
+        return root.appendingPathComponent(".agents/skills")
     }
 
     // MARK: - Detection

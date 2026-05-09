@@ -8,6 +8,7 @@ private let logger = Logger(subsystem: "com.raw2draft", category: "EditorWebView
 /// Replaces the NSTextView-based MarkdownEditorView.
 struct MarkdownEditorWebView: NSViewRepresentable {
     let content: String
+    let contentRevision: Int
     let fontName: String
     let fontSize: CGFloat
     let socialMode: Bool
@@ -65,12 +66,15 @@ struct MarkdownEditorWebView: NSViewRepresentable {
         // Always keep the coordinator's pending content up to date so the
         // "ready" handler can use it even if isReady hasn't fired yet.
         coordinator.pendingContent = content
+        coordinator.pendingContentRevision = contentRevision
 
-        logger.info("updateNSView: isReady=\(coordinator.isReady) contentLen=\(content.count) lastSentLen=\(coordinator.lastSentContent.count) match=\(content == coordinator.lastSentContent)")
+        logger.info("updateNSView: isReady=\(coordinator.isReady) contentLen=\(content.count) revision=\(contentRevision) lastSentLen=\(coordinator.lastSentContent.count) lastRevision=\(coordinator.lastContentRevision) match=\(content == coordinator.lastSentContent)")
 
         // Update content if it changed externally (file switch, etc.)
-        if coordinator.isReady && content != coordinator.lastSentContent {
+        if coordinator.isReady
+            && (content != coordinator.lastSentContent || contentRevision != coordinator.lastContentRevision) {
             coordinator.lastSentContent = content
+            coordinator.lastContentRevision = contentRevision
             coordinator.sendContent(content, to: webView)
         }
 
@@ -129,9 +133,11 @@ struct MarkdownEditorWebView: NSViewRepresentable {
         weak var webView: WKWebView?
         var isReady = false
         var lastSentContent = ""
+        var lastContentRevision = 0
         /// The latest content from SwiftUI, kept in sync by updateNSView.
         /// Used by the "ready" handler to avoid relying on the stale `parent` reference.
         var pendingContent: String = ""
+        var pendingContentRevision = 0
         var lastFontName = ""
         var lastFontSize: CGFloat = 0
         var lastSocialMode = false
@@ -142,6 +148,7 @@ struct MarkdownEditorWebView: NSViewRepresentable {
         init(parent: MarkdownEditorWebView) {
             self.parent = parent
             self.pendingContent = parent.content
+            self.pendingContentRevision = parent.contentRevision
             super.init()
         }
 
@@ -184,12 +191,14 @@ struct MarkdownEditorWebView: NSViewRepresentable {
                 // Load initial content using pendingContent (kept in sync by updateNSView)
                 // rather than parent.content which may be stale.
                 let content = pendingContent
+                let revision = pendingContentRevision
                 lastSentContent = content
-                logger.info("ready: sending pendingContent len=\(content.count) first80=\(String(content.prefix(80)))")
+                lastContentRevision = revision
+                logger.info("ready: sending pendingContent len=\(content.count) revision=\(revision) first80=\(String(content.prefix(80)))")
                 if let webView {
                     sendContent(content, to: webView)
                     // Verify content was actually set by querying the editor
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         webView.evaluateJavaScript("window.editorBridge.getContent().length") { result, error in
                             if let len = result as? Int {
                                 logger.info("ready verify: editor doc length=\(len)")

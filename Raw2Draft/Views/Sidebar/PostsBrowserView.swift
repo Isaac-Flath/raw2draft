@@ -109,6 +109,7 @@ struct PostsBrowserView: View {
                             files: postFiles[post.id] ?? [],
                             editingURL: $editingURL,
                             editingName: $editingName,
+                            onOpenPost: { openPost(post) },
                             onToggleExpand: { toggleExpand(post) },
                             onOpenFile: { onOpenPost($0) },
                             onCreateFile: { createFileInline(in: post) },
@@ -211,8 +212,15 @@ struct PostsBrowserView: View {
         } else {
             expandedPostIds.insert(post.id)
             loadFiles(for: post)
-            onOpenPost(post.filePath)
         }
+    }
+
+    private func openPost(_ post: BlogPost) {
+        if !expandedPostIds.contains(post.id) {
+            expandedPostIds.insert(post.id)
+            loadFiles(for: post)
+        }
+        onOpenPost(post.filePath)
     }
 
     private func loadFiles(for post: BlogPost) {
@@ -387,6 +395,7 @@ private struct PostRowView: View {
     let files: [URL]
     @Binding var editingURL: URL?
     @Binding var editingName: String
+    let onOpenPost: () -> Void
     let onToggleExpand: () -> Void
     let onOpenFile: (URL) -> Void
     let onCreateFile: () -> Void
@@ -443,46 +452,54 @@ private struct PostRowView: View {
     }
 
     private var postHeaderRow: some View {
-        Button(action: onToggleExpand) {
-            HStack(spacing: 6) {
+        HStack(spacing: 6) {
+            Button(action: onToggleExpand) {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 9, weight: .semibold))
                     .foregroundStyle(.tertiary)
                     .rotationEffect(.degrees(isExpanded ? 90 : 0))
                     .animation(.easeInOut(duration: 0.15), value: isExpanded)
                     .frame(width: 12)
-
-                Circle()
-                    .fill(statusColor)
-                    .frame(width: 8, height: 8)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(post.title.isEmpty ? post.slug : post.title)
-                        .font(AppFonts.serif(12, weight: .medium))
-                        .lineLimit(1)
-                    HStack(spacing: 6) {
-                        if !post.date.isEmpty {
-                            Text(post.date)
-                                .font(.system(size: 10, design: .monospaced))
-                        }
-                        if !post.section.isEmpty {
-                            Text(post.section)
-                                .font(.system(size: 10))
-                        }
-                        Text("\(post.wordCount)w")
-                            .font(.system(size: 10, design: .monospaced))
-                            .foregroundStyle(.tertiary)
-                    }
-                    .foregroundStyle(.secondary)
-                }
-                Spacer()
+                    .contentShape(Rectangle())
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(isHovered ? AppColors.warmTint : Color.clear)
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
+            .help(isExpanded ? "Collapse files" : "Expand files")
+
+            Button(action: onOpenPost) {
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(statusColor)
+                        .frame(width: 8, height: 8)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(post.title.isEmpty ? post.slug : post.title)
+                            .font(AppFonts.serif(12, weight: .medium))
+                            .lineLimit(1)
+                        HStack(spacing: 6) {
+                            if !post.date.isEmpty {
+                                Text(post.date)
+                                    .font(.system(size: 10, design: .monospaced))
+                            }
+                            if !post.section.isEmpty {
+                                Text(post.section)
+                                    .font(.system(size: 10))
+                            }
+                            Text("\(post.wordCount)w")
+                                .font(.system(size: 10, design: .monospaced))
+                                .foregroundStyle(.tertiary)
+                        }
+                        .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(isHovered ? AppColors.warmTint : Color.clear)
         .onHover { isHovered = $0 }
         .help(post.publicURL)
         .contextMenu {
@@ -709,4 +726,3 @@ private struct NewDirectorySheet: View {
         .frame(width: 300)
     }
 }
-

@@ -130,6 +130,50 @@ function cellAtPos(doc, pos, startLine) {
   return { row, col: Math.max(0, col) };
 }
 
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+/** Find absolute content bounds for a table cell. */
+function cellBounds(doc, tableStartLine, row, col) {
+  const lineNo = tableStartLine + row;
+  if (lineNo < 1 || lineNo > doc.lines) return null;
+
+  const line = doc.line(lineNo);
+  const text = line.text;
+  let pipeCount = 0;
+
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] !== "|") continue;
+
+    if (pipeCount === col) {
+      let start = i + 1;
+      if (text[start] === " ") start++;
+
+      let end = text.indexOf("|", start);
+      if (end === -1) end = text.length;
+
+      let contentEnd = end;
+      while (contentEnd > start && text[contentEnd - 1] === " ") contentEnd--;
+
+      return {
+        start: line.from + start,
+        contentEnd: line.from + contentEnd,
+      };
+    }
+
+    pipeCount++;
+  }
+
+  return null;
+}
+
+function cursorOffsetInCell(doc, pos, tableStartLine, cell) {
+  const bounds = cellBounds(doc, tableStartLine, cell.row, cell.col);
+  if (!bounds) return 0;
+  return clamp(pos - bounds.start, 0, bounds.contentEnd - bounds.start);
+}
+
 // ── Commands ───────────────────────────────────────────────────────────
 
 /** Format the table under the cursor (if any). Returns true if formatted. */
@@ -147,51 +191,37 @@ function formatTableAtCursor(view) {
   const oldText = view.state.doc.sliceString(from, to);
   if (formatted === oldText) return true; // already formatted
 
-  // Compute where cursor should land in the new text
-  const offsetInTable = pos - from;
-  // Map offset through the reformat — find same row/col position
+  // Map the caret through the reformat by preserving its offset in the cell.
   const cell = cellAtPos(view.state.doc, pos, range.startLine);
+  const offset = cell ? cursorOffsetInCell(view.state.doc, pos, range.startLine, cell) : 0;
 
   view.dispatch({ changes: { from, to, insert: formatted } });
 
-  // Restore cursor to the same cell
   if (cell) {
-    placeCursorInCell(view, range.startLine, cell.row, cell.col);
+    placeCursorInCell(view, range.startLine, cell.row, cell.col, {
+      select: false,
+      offset,
+    });
   }
 
   return true;
 }
 
-/** Place cursor at the start of content in a given cell. */
-function placeCursorInCell(view, tableStartLine, row, col) {
-  const lineNo = tableStartLine + row;
-  if (lineNo < 1 || lineNo > view.state.doc.lines) return;
-  const line = view.state.doc.line(lineNo);
-  const text = line.text;
+/** Place cursor or selection in a given cell. */
+function placeCursorInCell(view, tableStartLine, row, col, options = {}) {
+  const bounds = cellBounds(view.state.doc, tableStartLine, row, col);
+  if (!bounds) return;
 
-  // Find the position just after the col-th pipe
-  let pipeCount = 0;
-  for (let i = 0; i < text.length; i++) {
-    if (text[i] === "|") {
-      if (pipeCount === col) {
-        // Move past pipe and space
-        let start = i + 1;
-        if (text[start] === " ") start++;
-        // Find end of cell content (before next pipe, trimming trailing space)
-        let end = text.indexOf("|", start);
-        if (end === -1) end = text.length;
-        // Trim trailing spaces for selection end
-        let contentEnd = end;
-        while (contentEnd > start && text[contentEnd - 1] === " ") contentEnd--;
-
-        view.dispatch({
-          selection: { anchor: line.from + start, head: line.from + contentEnd },
-        });
-        return;
-      }
-      pipeCount++;
-    }
+  if (options.select === false) {
+    const offset = options.offset ?? 0;
+    const pos = clamp(bounds.start + offset, bounds.start, bounds.contentEnd);
+    view.dispatch({ selection: { anchor: pos, head: pos } });
+    return;
   }
+
+  view.dispatch({
+    selection: { anchor: bounds.start, head: bounds.contentEnd },
+  });
 }
 
 /** Tab: move to next cell, auto-format. */
@@ -432,18 +462,26 @@ function buildTableDecorations(view) {
  * auto-align it. Tracks the last-formatted table range to avoid loops.
  */
 function autoFormatListener() {
-  let lastFormatted = null; // "startLine:endLine:docLength" key
+  let lastFormatted = null; // "startLine:endLine:content" key
+  let pendingFrame = null;
 
   return EditorView.updateListener.of((update) => {
     if (!update.selectionSet && !update.docChanged) return;
 
     const view = update.view;
-    const pos = view.state.selection.main.head;
+    const selection = view.state.selection.main;
+    if (!selection.empty) return;
+
+    const pos = selection.head;
     const lineNo = view.state.doc.lineAt(pos).number;
     const range = findTableRange(view.state.doc, lineNo);
 
     if (!range) {
       lastFormatted = null;
+      if (pendingFrame !== null) {
+        cancelAnimationFrame(pendingFrame);
+        pendingFrame = null;
+      }
       return;
     }
 
@@ -451,7 +489,7 @@ function autoFormatListener() {
     const from = view.state.doc.line(range.startLine).from;
     const to = view.state.doc.line(range.endLine).to;
     const content = view.state.doc.sliceString(from, to);
-    const key = `${range.startLine}:${range.endLine}:${content.length}`;
+    const key = `${range.startLine}:${range.endLine}:${content}`;
 
     if (key === lastFormatted) return; // already formatted this version
 
@@ -461,12 +499,15 @@ function autoFormatListener() {
       return;
     }
 
-    // Remember the cell the cursor is in before reformatting
-    const cell = cellAtPos(view.state.doc, pos, range.startLine);
-
     // Use requestAnimationFrame to avoid dispatching during an update
-    requestAnimationFrame(() => {
-      const currentPos = view.state.selection.main.head;
+    if (pendingFrame !== null) cancelAnimationFrame(pendingFrame);
+    pendingFrame = requestAnimationFrame(() => {
+      pendingFrame = null;
+
+      const selection = view.state.selection.main;
+      if (!selection.empty) return;
+
+      const currentPos = selection.head;
       const currentLineNo = view.state.doc.lineAt(currentPos).number;
       const currentRange = findTableRange(view.state.doc, currentLineNo);
       if (!currentRange || currentRange.startLine !== range.startLine) return;
@@ -475,15 +516,24 @@ function autoFormatListener() {
       const curTo = view.state.doc.line(currentRange.endLine).to;
       const curContent = view.state.doc.sliceString(curFrom, curTo);
       const newFormatted = formatTable(view.state.doc, currentRange.startLine, currentRange.endLine);
-      if (!newFormatted || newFormatted === curContent) return;
+      if (!newFormatted || newFormatted === curContent) {
+        lastFormatted = `${currentRange.startLine}:${currentRange.endLine}:${curContent}`;
+        return;
+      }
+
+      const cell = cellAtPos(view.state.doc, currentPos, currentRange.startLine);
+      const offset = cell ? cursorOffsetInCell(view.state.doc, currentPos, currentRange.startLine, cell) : 0;
 
       view.dispatch({ changes: { from: curFrom, to: curTo, insert: newFormatted } });
 
       if (cell) {
-        placeCursorInCell(view, currentRange.startLine, cell.row, cell.col);
+        placeCursorInCell(view, currentRange.startLine, cell.row, cell.col, {
+          select: false,
+          offset,
+        });
       }
 
-      lastFormatted = `${currentRange.startLine}:${currentRange.endLine}:${newFormatted.length}`;
+      lastFormatted = `${currentRange.startLine}:${currentRange.endLine}:${newFormatted}`;
     });
   });
 }

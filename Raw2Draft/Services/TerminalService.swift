@@ -10,34 +10,31 @@ struct TerminalProcessParams {
 
 /// Protocol for terminal session management.
 protocol TerminalServiceProtocol {
-    func isClaudeInstalled() -> Bool
-    func resolveClaudeBin() -> String
+    func isCodexInstalled() -> Bool
+    func resolveCodexBin() -> String
     func buildEnvironment(envFileService: EnvFileServiceProtocol) -> [String: String]
     func processParams(projectId: String, envFileService: EnvFileServiceProtocol, workingDirectory: URL) -> TerminalProcessParams
 }
 
-/// Resolves the Claude binary and builds process launch parameters.
+/// Resolves the Codex binary and builds process launch parameters.
 final class TerminalService: TerminalServiceProtocol {
     private let fileManager = FileManager.default
 
-    func isClaudeInstalled() -> Bool {
-        Constants.claudeSearchPaths.contains { fileManager.fileExists(atPath: $0) }
+    func isCodexInstalled() -> Bool {
+        Constants.codexSearchPaths.contains { fileManager.fileExists(atPath: $0) }
     }
 
-    func resolveClaudeBin() -> String {
-        for path in Constants.claudeSearchPaths {
+    func resolveCodexBin() -> String {
+        for path in Constants.codexSearchPaths {
             if fileManager.fileExists(atPath: path) {
                 return path
             }
         }
-        return "claude"
+        return "codex"
     }
 
     func buildEnvironment(envFileService: EnvFileServiceProtocol) -> [String: String] {
         var env = ProcessInfo.processInfo.environment
-
-        // Remove Claude Code nesting guard so the app can launch claude as a child
-        env.removeValue(forKey: "CLAUDECODE")
 
         let extraPaths = [
             "/opt/homebrew/bin",
@@ -54,41 +51,67 @@ final class TerminalService: TerminalServiceProtocol {
     }
 
     func processParams(projectId: String, envFileService: EnvFileServiceProtocol, workingDirectory: URL) -> TerminalProcessParams {
-        let claudeBin = resolveClaudeBin()
+        let codexBin = resolveCodexBin()
         var env = buildEnvironment(envFileService: envFileService)
+        CodexContextDeployer.installCodexUserSkills()
 
-        // Terminal type — required for TUI apps like Claude Code
+        // Terminal type required for TUI apps like Codex.
         env["TERM"] = "xterm-256color"
         env["COLORTERM"] = "truecolor"
 
-        // Enable CLAUDE.md loading from --add-dir directories
-        env["CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD"] = "1"
+        var args = ["--dangerously-bypass-approvals-and-sandbox"]
 
-        var args = ["--dangerously-skip-permissions"]
+        if let instructions = CodexContextDeployer.agentInstructions, !instructions.isEmpty {
+            args += ["-c", "developer_instructions=\(tomlStringLiteral(instructions))"]
+        }
 
-        // Add deployed context directory (bundled CLAUDE.md with app-level instructions)
-        let contextPath = ClaudeContextDeployer.deployedPath
+        args += ["-c", "skills.include_instructions=true"]
+
+        // Grant Codex access to the editable Raw2Draft context directories.
+        let contextPath = CodexContextDeployer.deployedPath
         if fileManager.fileExists(atPath: contextPath.path) {
             args += ["--add-dir", contextPath.path]
         }
 
         // Add skills directory (custom override or default clone)
-        let skillsPath = ClaudeContextDeployer.skillsPath
+        let skillsPath = CodexContextDeployer.skillsPath
         if fileManager.fileExists(atPath: skillsPath.path) {
             args += ["--add-dir", skillsPath.path]
         }
 
         // Add wiki directory (custom override or default clone)
-        let wikiPath = ClaudeContextDeployer.wikiPath
+        let wikiPath = CodexContextDeployer.wikiPath
         if fileManager.fileExists(atPath: wikiPath.path) {
             args += ["--add-dir", wikiPath.path]
         }
 
         return TerminalProcessParams(
-            executable: claudeBin,
+            executable: codexBin,
             args: args,
             environment: env,
             currentDirectory: workingDirectory.path
         )
+    }
+
+    private func tomlStringLiteral(_ value: String) -> String {
+        var escaped = "\""
+        for scalar in value.unicodeScalars {
+            switch scalar.value {
+            case 34:
+                escaped += "\\\""
+            case 92:
+                escaped += "\\\\"
+            case 10:
+                escaped += "\\n"
+            case 13:
+                escaped += "\\r"
+            case 9:
+                escaped += "\\t"
+            default:
+                escaped.unicodeScalars.append(scalar)
+            }
+        }
+        escaped += "\""
+        return escaped
     }
 }

@@ -82,7 +82,7 @@ struct SettingsSheet: View {
 
             Divider()
 
-            // Claude Context
+            // Codex Context
             ContextSection()
 
             Spacer()
@@ -122,21 +122,21 @@ struct SettingsSheet: View {
     }
 }
 
-/// Claude context (skills, references, CLAUDE.md) management.
+/// Codex context (skills, references, AGENTS.md) management.
 private struct ContextSection: View {
     @State private var contextReset = false
     @State private var customSkillsPath: String = UserDefaults.standard.string(forKey: UserDefaultsKey.customSkillsPath) ?? ""
     @State private var customWikiPath: String = UserDefaults.standard.string(forKey: UserDefaultsKey.customWikiPath) ?? ""
 
-    private var isStale: Bool { ClaudeContextDeployer.isStale }
+    private var isStale: Bool { CodexContextDeployer.isStale }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Claude Context")
+                Text("Codex Context")
                     .font(AppFonts.headline())
 
-                Text(ClaudeContextDeployer.deployedPath.path)
+                Text(CodexContextDeployer.deployedPath.path)
                     .font(.system(size: 10, design: .monospaced))
                     .foregroundStyle(.tertiary)
                     .lineLimit(1)
@@ -149,7 +149,7 @@ private struct ContextSection: View {
                     customWikiPath = ""
                     UserDefaults.standard.removeObject(forKey: UserDefaultsKey.customSkillsPath)
                     UserDefaults.standard.removeObject(forKey: UserDefaultsKey.customWikiPath)
-                    contextReset = ClaudeContextDeployer.resetToDefaults()
+                    contextReset = CodexContextDeployer.resetToDefaults()
                 }
                 .controlSize(.small)
             }
@@ -159,7 +159,7 @@ private struct ContextSection: View {
                 label: "Skills",
                 path: $customSkillsPath,
                 defaultsKey: UserDefaultsKey.customSkillsPath,
-                defaultPath: ClaudeContextDeployer.defaultSkillsPath.path
+                defaultPath: CodexContextDeployer.defaultSkillsPath.path
             )
 
             // Custom wiki path
@@ -167,7 +167,7 @@ private struct ContextSection: View {
                 label: "Wiki",
                 path: $customWikiPath,
                 defaultsKey: UserDefaultsKey.customWikiPath,
-                defaultPath: ClaudeContextDeployer.defaultWikiPath.path
+                defaultPath: CodexContextDeployer.defaultWikiPath.path
             )
 
             if isStale {

@@ -10,6 +10,7 @@ final class EditorViewModel: ErrorHandling {
     var files: [ProjectFile] = []
     var activeFile: String?
     var fileContent: String = ""
+    var contentRevision: Int = 0
     var dirty: Bool = false
     var saving: Bool = false
     var errorMessage: String?
@@ -56,6 +57,7 @@ final class EditorViewModel: ErrorHandling {
     private(set) var activeProjectId: String?
     private var autosaveTask: Task<Void, Never>?
     private var confirmationTask: Task<Void, Never>?
+    private var externalReloadTask: Task<Void, Never>?
     private let projectService: any ProjectServiceProtocol
 
     init(projectService: any ProjectServiceProtocol) {
@@ -71,7 +73,7 @@ final class EditorViewModel: ErrorHandling {
         guard let projectId else {
             files = []
             activeFile = nil
-            fileContent = ""
+            replaceContent("", markClean: true, bumpRevision: true)
             return
         }
 
@@ -96,7 +98,7 @@ final class EditorViewModel: ErrorHandling {
             loadFileContent()
         } else {
             activeFile = nil
-            fileContent = ""
+            replaceContent("", markClean: true, bumpRevision: true)
         }
         broadcastActiveFile()
     }
@@ -121,7 +123,7 @@ final class EditorViewModel: ErrorHandling {
 
     func loadFileContent() {
         guard let path = activeFile else {
-            fileContent = ""
+            replaceContent("", markClean: true, bumpRevision: true)
             return
         }
 
@@ -129,11 +131,10 @@ final class EditorViewModel: ErrorHandling {
         if openExternalFiles.contains(where: { $0.path == path }) {
             let fileURL = URL(fileURLWithPath: path)
             do {
-                fileContent = try String(contentsOf: fileURL, encoding: .utf8)
-                dirty = false
+                replaceContent(try String(contentsOf: fileURL, encoding: .utf8), markClean: true, bumpRevision: true)
                 errorMessage = nil
             } catch {
-                fileContent = ""
+                replaceContent("", markClean: true, bumpRevision: true)
                 showError(error.localizedDescription)
             }
             return
@@ -142,11 +143,10 @@ final class EditorViewModel: ErrorHandling {
         // Linked project file (external post with project: frontmatter)
         if activeProjectId == nil, let linkedId = linkedProjectId {
             do {
-                fileContent = try projectService.readProjectFile(projectId: linkedId, relativePath: path)
-                dirty = false
+                replaceContent(try projectService.readProjectFile(projectId: linkedId, relativePath: path), markClean: true, bumpRevision: true)
                 errorMessage = nil
             } catch {
-                fileContent = ""
+                replaceContent("", markClean: true, bumpRevision: true)
                 showError(error.localizedDescription)
             }
             return
@@ -154,16 +154,15 @@ final class EditorViewModel: ErrorHandling {
 
         // Normal project file
         guard let projectId = activeProjectId else {
-            fileContent = ""
+            replaceContent("", markClean: true, bumpRevision: true)
             return
         }
 
         do {
-            fileContent = try projectService.readProjectFile(projectId: projectId, relativePath: path)
-            dirty = false
+            replaceContent(try projectService.readProjectFile(projectId: projectId, relativePath: path), markClean: true, bumpRevision: true)
             errorMessage = nil
         } catch {
-            fileContent = ""
+            replaceContent("", markClean: true, bumpRevision: true)
             errorMessage = error.localizedDescription
         }
     }
@@ -224,7 +223,7 @@ final class EditorViewModel: ErrorHandling {
         do {
             let newContent = try projectService.readProjectFile(projectId: projectId, relativePath: event.path)
             if newContent != fileContent {
-                fileContent = newContent
+                replaceContent(newContent, markClean: true, bumpRevision: true)
             }
         } catch {
             logger.warning("Failed to reload file '\(event.path)': \(error.localizedDescription)")
@@ -234,6 +233,17 @@ final class EditorViewModel: ErrorHandling {
     /// Called by AppViewModel when a file changes on disk (directory/single-file mode).
     /// Reloads the active file if it was changed externally.
     func handleExternalFileChange(absolutePath: String) {
+        guard let activeFile, activeFile == absolutePath else { return }
+
+        externalReloadTask?.cancel()
+        externalReloadTask = Task {
+            try? await Task.sleep(for: .milliseconds(Constants.externalFileReloadDebounceMs))
+            guard !Task.isCancelled else { return }
+            self.reloadExternalFileIfClean(absolutePath: absolutePath)
+        }
+    }
+
+    private func reloadExternalFileIfClean(absolutePath: String) {
         guard !dirty else { return }
         guard let activeFile, activeFile == absolutePath else { return }
 
@@ -241,7 +251,7 @@ final class EditorViewModel: ErrorHandling {
         guard let newContent = try? String(contentsOf: fileURL, encoding: .utf8) else { return }
 
         if newContent != fileContent {
-            fileContent = newContent
+            replaceContent(newContent, markClean: true, bumpRevision: true)
         }
     }
 
@@ -251,13 +261,13 @@ final class EditorViewModel: ErrorHandling {
     /// In additive mode, the file is added to the open tabs without replacing existing ones.
     func openExternalFile(url: URL, additive: Bool = false) {
         if dirty { saveCurrentFile() }
+        externalReloadTask?.cancel()
 
         guard let content = try? String(contentsOf: url, encoding: .utf8) else { return }
 
         activeProjectId = nil
         activeFile = url.path
-        fileContent = content
-        dirty = false
+        replaceContent(content, markClean: true, bumpRevision: true)
         errorMessage = nil
         externalFilePath = url
         broadcastActiveFile()
@@ -443,8 +453,18 @@ final class EditorViewModel: ErrorHandling {
         }
     }
 
+    private func replaceContent(_ content: String, markClean: Bool, bumpRevision: Bool) {
+        fileContent = content
+        if markClean {
+            dirty = false
+        }
+        if bumpRevision {
+            contentRevision &+= 1
+        }
+    }
+
     /// Write the current active file path to ~/.raw2draft/active-file
-    /// so external tools (e.g. Claude Code hooks) can read it.
+    /// so external tools (e.g. Codex hooks or skills) can read it.
     func broadcastActiveFile() {
         let dir = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent(".raw2draft")

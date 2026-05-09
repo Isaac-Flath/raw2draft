@@ -35,6 +35,7 @@ import { tableEditing, insertTableCommand } from "./table.js";
 import { createPreviewPane, updatePreview, setPreviewVisible, syncPreviewScroll } from "./preview.js";
 import { createBridge } from "./bridge.js";
 import { resolveD2Render } from "./d2-renderer.js";
+import { programmaticContentSet } from "./transactions.js";
 
 window.d2Rendered = (requestId, result) => resolveD2Render(requestId, result);
 
@@ -77,7 +78,8 @@ function createEditor(parent) {
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
           const content = update.state.doc.toString();
-          bridge.notifyContentChanged(content);
+          const programmatic = update.transactions.some((tr) => tr.annotation(programmaticContentSet));
+          if (!programmatic) bridge.notifyContentChanged(content);
           updatePreview(content);
         }
         if (update.selectionSet) {

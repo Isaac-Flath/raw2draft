@@ -9,6 +9,7 @@ import { EditorView } from "@codemirror/view";
 import { scrollPreviewToHeading } from "./preview.js";
 import { setAssetBaseDir } from "./asset-url.js";
 import { refreshMermaidTheme } from "./mermaid-renderer.js";
+import { programmaticContentSet } from "./transactions.js";
 
 function postToSwift(type, payload = {}) {
   try {
@@ -51,7 +52,10 @@ export function createBridge(view) {
       // Preserve scroll position across the transaction — CM maps selections
       // through changes, but large rewrites can still shift the viewport.
       const scrollTop = view.scrollDOM.scrollTop;
-      view.dispatch({ changes: { from, to, insert } });
+      view.dispatch({
+        changes: { from, to, insert },
+        annotations: programmaticContentSet.of(true),
+      });
       view.scrollDOM.scrollTop = scrollTop;
     },
 

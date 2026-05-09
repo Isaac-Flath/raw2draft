@@ -56,8 +56,8 @@ struct TerminalPaneView: View {
             }
 
             // Terminal view
-            if !termVM.isClaudeInstalled {
-                claudeNotInstalledView
+            if !termVM.isCodexInstalled {
+                codexNotInstalledView
             } else if let key = terminalKey {
                 GhosttyTerminalView(
                     projectId: key,
@@ -78,9 +78,9 @@ struct TerminalPaneView: View {
         .background(SwiftUI.Color(hex: Constants.TerminalColors.background))
     }
 
-    // MARK: - Claude Not Installed
+    // MARK: - Codex Not Installed
 
-    private var claudeNotInstalledView: some View {
+    private var codexNotInstalledView: some View {
         VStack(spacing: 16) {
             Spacer()
 
@@ -88,17 +88,17 @@ struct TerminalPaneView: View {
                 .font(.system(size: 40))
                 .foregroundStyle(.secondary)
 
-            Text("Claude CLI Not Found")
+            Text("Codex CLI Not Found")
                 .font(.headline)
 
-            Text("Raw2Draft uses the Claude CLI for its integrated terminal.\nInstall it to get started:")
+            Text("Raw2Draft uses the Codex CLI for its integrated terminal.\nInstall it to get started:")
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
                 .font(.subheadline)
 
             VStack(alignment: .leading, spacing: 8) {
-                instructionRow("1", "Install Claude CLI from https://claude.ai/download")
-                instructionRow("2", "Verify it works by running  claude --version  in Terminal")
+                instructionRow("1", "Install Codex CLI with  npm install -g @openai/codex  or  brew install --cask codex")
+                instructionRow("2", "Verify it works by running  codex --version  in Terminal")
                 instructionRow("3", "Restart Raw2Draft")
             }
             .padding()

@@ -8,8 +8,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Force light appearance for consistent lavender theme
         NSApp.appearance = NSAppearance(named: .aqua)
 
-        // Deploy bundled Claude context (skills, references, CLAUDE.md)
-        ClaudeContextDeployer.deploy()
+        // Deploy bundled Codex context (skills, references, AGENTS.md)
+        CodexContextDeployer.deploy()
 
         // Single-instance enforcement
         let bundleId = Bundle.main.bundleIdentifier ?? "com.isaac-flath.Raw2Draft"

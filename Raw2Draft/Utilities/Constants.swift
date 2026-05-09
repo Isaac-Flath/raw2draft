@@ -3,6 +3,8 @@ import Foundation
 enum Constants {
     // MARK: - Timing
     static let autosaveDebounceMs: Int = 900
+    static let externalFileReloadDebounceMs: Int = 250
+    static let postListRefreshDebounceMs: Int = 300
     static let uploadStatusResetMs: Int = 3000
     static let terminalResizeDebounceMs: Int = 80
     static let watcherStabilityThresholdMs: Int = 100
@@ -116,13 +118,13 @@ enum Constants {
     // MARK: - URL Scheme
     static let urlScheme = "raw2draft"
 
-    // MARK: - Claude CLI
-    static let claudeSearchPaths: [String] = {
+    // MARK: - Codex CLI
+    static let codexSearchPaths: [String] = {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
         return [
-            "\(home)/.local/bin/claude",
-            "/usr/local/bin/claude",
-            "/opt/homebrew/bin/claude",
+            "\(home)/.local/bin/codex",
+            "/usr/local/bin/codex",
+            "/opt/homebrew/bin/codex",
         ]
     }()
 }
@@ -159,4 +161,3 @@ enum UserDefaultsKey {
         "lastFile_\(projectId)"
     }
 }
-

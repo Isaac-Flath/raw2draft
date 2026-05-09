@@ -2,7 +2,7 @@ import Foundation
 import Darwin
 import GhosttyTerminal
 
-/// Manages a child process (claude) connected via a PTY, bridged to an InMemoryTerminalSession
+/// Manages a child process connected via a PTY, bridged to an InMemoryTerminalSession
 /// for rendering in libghostty.
 final class TerminalProcess: @unchecked Sendable {
     let session: InMemoryTerminalSession

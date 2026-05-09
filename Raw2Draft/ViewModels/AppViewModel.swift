@@ -63,6 +63,7 @@ final class AppViewModel: ErrorHandling {
     let fileWatcherService: any FileWatcherServiceProtocol
     // MARK: - Private
     private var fileWatcherTask: Task<Void, Never>?
+    private var postListRefreshTask: Task<Void, Never>?
 
     init(
         projectService: any ProjectServiceProtocol = ProjectService(),
@@ -402,8 +403,7 @@ final class AppViewModel: ErrorHandling {
         if event.projectId != nil {
             // Content studio mode: refresh projects and delegate to editor
             if event.type == .added || event.type == .removed {
-                loadProjects()
-                postsRefreshCounter += 1
+                schedulePostListRefresh()
             }
             editor.handleFileChange(event)
             // Also handle externally opened post files (activeProjectId is nil)
@@ -414,6 +414,16 @@ final class AppViewModel: ErrorHandling {
                 fileBrowser?.loadRootNodes()
             }
             editor.handleExternalFileChange(absolutePath: event.absolutePath)
+        }
+    }
+
+    private func schedulePostListRefresh() {
+        postListRefreshTask?.cancel()
+        postListRefreshTask = Task {
+            try? await Task.sleep(for: .milliseconds(Constants.postListRefreshDebounceMs))
+            guard !Task.isCancelled else { return }
+            loadProjects()
+            postsRefreshCounter += 1
         }
     }
 }

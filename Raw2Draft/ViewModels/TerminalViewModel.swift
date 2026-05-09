@@ -42,7 +42,7 @@ final class TerminalViewModel {
         return viewPool[activeProjectId]
     }
 
-    /// Action bar command groups for Claude Code.
+    /// Action bar command groups for Codex skills.
     enum ActionGroup: String, CaseIterable {
         case content
         case video
@@ -58,14 +58,14 @@ final class TerminalViewModel {
     }
 
     enum ActionCommand: String {
-        case status = "/content-status"
-        case blog = "/content-blog"
-        case social = "/content-social"
-        case blogSchedule = "/blog-schedule"
-        case socialSchedule = "/social-schedule"
-        case videoEditor = "/video-editor"
-        case videoResolve = "/video-resolve"
-        case publish = "/publish"
+        case status = "$content-status"
+        case blog = "$content-blog"
+        case social = "$content-social"
+        case blogSchedule = "$blog-schedule"
+        case socialSchedule = "$social-schedule"
+        case videoEditor = "$video-editor"
+        case videoResolve = "$video-resolve"
+        case publish = "$publish"
 
         var label: String {
             switch self {
@@ -81,9 +81,9 @@ final class TerminalViewModel {
         }
     }
 
-    /// Whether Claude CLI is available on this system.
-    var isClaudeInstalled: Bool {
-        terminalService.isClaudeInstalled()
+    /// Whether Codex CLI is available on this system.
+    var isCodexInstalled: Bool {
+        terminalService.isCodexInstalled()
     }
 
     /// Working directory for terminal processes.

@@ -3,9 +3,9 @@
 **GitHub: [https://github.com/Isaac-Flath/raw2draft](https://github.com/Isaac-Flath/raw2draft)**
 
 > [!WARNING]
-> This app runs Claude Code with `--dangerously-skip-permissions` (YOLO mode). All AI-initiated actions (file writes, shell commands, etc.) are automatically approved without prompting. Use at your own risk and only with content you trust.
+> This app runs Codex with `--dangerously-bypass-approvals-and-sandbox` (YOLO mode). All AI-initiated actions (file writes, shell commands, etc.) are automatically approved without prompting. Use at your own risk and only with content you trust.
 
-A markdown editor with an integrated Claude Code terminal for macOS. I built this for my own writing workflow.
+A markdown editor with an integrated Codex terminal for macOS. I built this for my own writing workflow.
 
 Will it work for you? Probably not out of the box. My recommendation is to poke around, then use this repo as context to build your own tool that works the way you like.
 
@@ -15,13 +15,13 @@ Raw2Draft ships with a minimal set of starter skills and a starter knowledge bas
 
 Skills are procedures. They tell the agent *what* to do. A knowledge base tells it *how* to do things well: writing style guides, taste decisions, critique patterns, domain expertise. Without that context, skills produce generic results.
 
-Any knowledge base works. A wiki directory, a set of markdown files, a well-written CLAUDE.md. I manage mine with a tool called Agent KB (coming soon).
+Any knowledge base works. A wiki directory, a set of markdown files, a well-written AGENTS.md. I manage mine with a tool called Agent KB (coming soon).
 
 Fork the starter repos and make them your own, or point Raw2Draft at your own repos in Settings. The starters are scaffolding.
 
 ## Installation
 
-Requires [just](https://github.com/casey/just) and Xcode.
+Requires [just](https://github.com/casey/just), Xcode, and the Codex CLI.
 
 ```bash
 git clone https://github.com/Isaac-Flath/raw2draft.git
@@ -41,7 +41,7 @@ This compiles a Release build, copies it to `/Applications/Raw2Draft.app`, and i
 
 This is a personal tool. Some things are well-tested and used daily, some are experimental, some are brand new and barely tested. It all ships together. Use what works for you.
 
-- Split-pane markdown editor (CodeMirror 6) + Claude Code terminal
+- Split-pane markdown editor (CodeMirror 6) + Codex terminal
 - Content Studio mode for managing blog posts and content projects
 - Live markdown preview with heading outline
 - Agent skills and reference docs cloned from public starter repos on first launch
@@ -59,8 +59,8 @@ Configure in Settings or edit `~/.raw2draft/.env` directly.
 
 | Key | What it's for |
 |-----|---------------|
-| `GEMINI_API_KEY` | AI provider for Claude CLI |
-| `OPENAI_API_KEY` | AI provider for Claude CLI |
+| `OPENAI_API_KEY` | Optional Codex API-key auth or OpenAI-backed skills |
+| `GEMINI_API_KEY` | Optional provider key used by custom skills |
 | `LEMONFOX_API_KEY` | Transcription |
 | `ASSEMBLYAI_API_KEY` | Transcription |
 | `AWS_ACCESS_KEY_ID` | Image hosting (S3) |
@@ -110,9 +110,9 @@ You can include any additional frontmatter fields your blog needs (e.g., `descri
 
 A post with a future `date` and `draft: false` shows as "scheduled" (indigo indicator). Otherwise it's "published" (green).
 
-## How Claude Code integration works
+## How Codex integration works
 
-There is no special Claude Code integration. The app runs a terminal and launches Claude Code with no app-specific modifications. It uses [agent skills](https://docs.anthropic.com/en/docs/claude-code/skills) for additional behavior.
+There is no special Codex protocol integration. The app runs a terminal and launches the Codex CLI with `--dangerously-bypass-approvals-and-sandbox`. Raw2Draft injects its app context from `~/.raw2draft/context/AGENTS.md` and installs Raw2Draft-managed skills into `~/.codex/skills` so Codex discovers them natively.
 
 ## Skills and knowledge base
 
@@ -121,7 +121,7 @@ On first launch, Raw2Draft clones two minimal starter repos into `~/.raw2draft/c
 - **[agent-starter-skills](https://github.com/Isaac-Flath/agent-starter-skills)**: A small set of skills for content creation, transcription, social media, and video editing
 - **[agent-starter-wiki](https://github.com/Isaac-Flath/agent-starter-wiki)**: Basic writing style guides and reference documents
 
-These are passed to Claude Code via `--add-dir` so skills are available as `/slash-commands` and reference docs are in context. They are intentionally minimal: enough to see how things work, not enough to produce great output on their own.
+Raw2Draft loads Codex-native skills from direct `SKILL.md` directories and `.agents/skills` roots, then copies managed skills into `~/.codex/skills`. Skills are invoked from Raw2Draft as `$skill-name` prompts.
 
 ### Customizing
 

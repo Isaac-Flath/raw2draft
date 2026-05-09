@@ -80,9 +80,9 @@ struct GhosttyTerminalView: NSViewRepresentable {
             installKeyMonitor(terminalView: terminalView)
         }
 
-        /// Monitor for Enter/Return key events and forward them to the PTY directly.
-        /// libghostty's InMemoryTerminalSession may not forward non-printable keys
-        /// through the write callback, so we intercept Enter at the NSEvent level.
+        /// Monitor terminal key events and forward them to the PTY directly.
+        /// libghostty's InMemoryTerminalSession routes some AppKit keys directly,
+        /// but Raw2Draft needs consistent text input and modifier-aware Enter.
         private func installKeyMonitor(terminalView: TerminalView) {
             removeKeyMonitor()
             keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self, weak terminalView] event in
@@ -93,7 +93,7 @@ struct GhosttyTerminalView: NSViewRepresentable {
                 // Handle ⌘V paste directly into the terminal
                 if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "v" {
                     if let text = NSPasteboard.general.string(forType: .string) {
-                        self.parent.terminalViewModel.sendKeyToProcess(projectId: projectId, key: text)
+                        self.sendKeyToProcess(projectId: projectId, key: text)
                     }
                     return nil
                 }
@@ -106,38 +106,108 @@ struct GhosttyTerminalView: NSViewRepresentable {
                     return nil
                 }
 
-                let keyCode = event.keyCode
-                // Return = 36, Enter (numpad) = 76
-                if keyCode == 36 || keyCode == 76 {
-                    self.parent.terminalViewModel.sendKeyToProcess(projectId: projectId, key: "\r")
-                    return nil // consume the event
-                }
-                // Tab = 48
-                if keyCode == 48 {
-                    self.parent.terminalViewModel.sendKeyToProcess(projectId: projectId, key: "\t")
+                if let sequence = self.terminalInputSequence(for: event) {
+                    self.sendKeyToProcess(projectId: projectId, key: sequence)
                     return nil
-                }
-                // Escape = 53
-                if keyCode == 53 {
-                    self.parent.terminalViewModel.sendKeyToProcess(projectId: projectId, key: "\u{1b}")
-                    return nil
-                }
-                // Backspace = 51
-                if keyCode == 51 {
-                    self.parent.terminalViewModel.sendKeyToProcess(projectId: projectId, key: "\u{7f}")
-                    return nil
-                }
-                // Arrow keys: Up=126, Down=125, Left=123, Right=124
-                switch keyCode {
-                case 126: self.parent.terminalViewModel.sendKeyToProcess(projectId: projectId, key: "\u{1b}[A"); return nil
-                case 125: self.parent.terminalViewModel.sendKeyToProcess(projectId: projectId, key: "\u{1b}[B"); return nil
-                case 124: self.parent.terminalViewModel.sendKeyToProcess(projectId: projectId, key: "\u{1b}[C"); return nil
-                case 123: self.parent.terminalViewModel.sendKeyToProcess(projectId: projectId, key: "\u{1b}[D"); return nil
-                default: break
                 }
 
                 return event
             }
+        }
+
+        private func sendKeyToProcess(projectId: String, key: String) {
+            MainActor.assumeIsolated {
+                parent.terminalViewModel.sendKeyToProcess(projectId: projectId, key: key)
+            }
+        }
+
+        private func terminalInputSequence(for event: NSEvent) -> String? {
+            let keyCode = event.keyCode
+
+            // Return = 36, Enter (numpad) = 76
+            if keyCode == 36 || keyCode == 76 {
+                if let modifier = csiModifierParameter(for: event) {
+                    return "\u{1b}[13;\(modifier)u"
+                }
+                return "\r"
+            }
+
+            // Tab = 48
+            if keyCode == 48 {
+                return event.modifierFlags.contains(.shift) ? "\u{1b}[Z" : "\t"
+            }
+
+            // Escape = 53
+            if keyCode == 53 {
+                return "\u{1b}"
+            }
+
+            // Backspace = 51
+            if keyCode == 51 {
+                if event.modifierFlags.contains(.option) && !event.modifierFlags.contains(.control) {
+                    return "\u{1b}\u{7f}"
+                }
+                return "\u{7f}"
+            }
+
+            switch keyCode {
+            case 123: return cursorSequence("D", event: event) // Left
+            case 124: return cursorSequence("C", event: event) // Right
+            case 125: return cursorSequence("B", event: event) // Down
+            case 126: return cursorSequence("A", event: event) // Up
+            case 115: return cursorSequence("H", event: event) // Home
+            case 119: return cursorSequence("F", event: event) // End
+            case 116: return tildeSequence(5, event: event) // Page Up
+            case 121: return tildeSequence(6, event: event) // Page Down
+            case 117: return tildeSequence(3, event: event) // Forward Delete
+            default: break
+            }
+
+            return printableText(for: event)
+        }
+
+        private func printableText(for event: NSEvent) -> String? {
+            guard event.modifierFlags.intersection([.command, .control]).isEmpty else {
+                return nil
+            }
+            guard let characters = event.characters, !characters.isEmpty else {
+                return nil
+            }
+            guard !isPrivateUseFunctionKey(characters) else {
+                return nil
+            }
+            return characters
+        }
+
+        private func cursorSequence(_ finalByte: String, event: NSEvent) -> String {
+            if let modifier = csiModifierParameter(for: event) {
+                return "\u{1b}[1;\(modifier)\(finalByte)"
+            }
+            return "\u{1b}[\(finalByte)"
+        }
+
+        private func tildeSequence(_ code: Int, event: NSEvent) -> String {
+            if let modifier = csiModifierParameter(for: event) {
+                return "\u{1b}[\(code);\(modifier)~"
+            }
+            return "\u{1b}[\(code)~"
+        }
+
+        private func csiModifierParameter(for event: NSEvent) -> Int? {
+            var modifier = 1
+            if event.modifierFlags.contains(.shift) { modifier += 1 }
+            if event.modifierFlags.contains(.option) { modifier += 2 }
+            if event.modifierFlags.contains(.control) { modifier += 4 }
+            return modifier == 1 ? nil : modifier
+        }
+
+        private func isPrivateUseFunctionKey(_ characters: String) -> Bool {
+            guard characters.count == 1,
+                  let scalar = characters.unicodeScalars.first
+            else {
+                return false
+            }
+            return (0xF700...0xF8FF).contains(Int(scalar.value))
         }
 
         func removeKeyMonitor() {

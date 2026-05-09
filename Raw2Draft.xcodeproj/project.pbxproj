@@ -35,7 +35,7 @@
 		5EF7AECF5D1DDD9DE8753F28 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8C9E9282F79C4DCA0CC1FB18 /* Assets.xcassets */; };
 		AAAA000000000000000ICON1 /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = AAAA000000000000000ICON2 /* AppIcon.icns */; };
 		6A0DD70EB33A54580A00C64A /* APIKeyRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77E58812E3211C2E8431E836 /* APIKeyRowView.swift */; };
-		CC00DEPLOYER00BLD01 /* ClaudeContextDeployer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC00DEPLOYER00REF01 /* ClaudeContextDeployer.swift */; };
+		CC00DEPLOYER00BLD01 /* CodexContextDeployer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC00DEPLOYER00REF01 /* CodexContextDeployer.swift */; };
 		6B99ACCD279252A9623E9294 /* BlogPost.swift in Sources */ = {isa = PBXBuildFile; fileRef = A380B72D1A14ECC761442683 /* BlogPost.swift */; };
 		6FA8C5693257CB3F6AB735E4 /* TerminalViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3197D70AF1FF03ECF37E3DA1 /* TerminalViewModel.swift */; };
 		7C7BB7CAF42CBFCFEBD1894C /* ImagePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D30AA5C8DC6846C3DF6B0E9 /* ImagePreviewView.swift */; };
@@ -43,7 +43,7 @@
 		8442C6214E9533136C253356 /* EditorViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25647B5645E12F690BC25887 /* EditorViewModelTests.swift */; };
 		92793F41AFB3552F967758AB /* ProjectSidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7AB5BE2B7655828E9D22CB6 /* ProjectSidebarView.swift */; };
 		92A64DD15E81C76D5402F8D5 /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = 795001E63F633250CA0F2106 /* index.html */; };
-		CC00CLAUDE0CONTEXT02 /* claude-context in Resources */ = {isa = PBXBuildFile; fileRef = CC00CLAUDE0CONTEXT01 /* claude-context */; };
+		CC00CODEX0CONTEXT02 /* codex-context in Resources */ = {isa = PBXBuildFile; fileRef = CC00CODEX0CONTEXT01 /* codex-context */; };
 		FF00FONTS000000BLD01 /* fonts in Resources */ = {isa = PBXBuildFile; fileRef = FF00FONTS000000REF01 /* fonts */; };
 		980D8C61E2C86A1F45450EF4 /* EditorPaneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1972159C705536E755CFAAD /* EditorPaneView.swift */; };
 		9AE18396493BA9FFF9CA7B9E /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE916749F1B6BAF727FA6248 /* VideoPlayerView.swift */; };
@@ -111,14 +111,14 @@
 		70323528E351A08A8C5200AB /* MainContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainContentView.swift; sourceTree = "<group>"; };
 		7775B93B59B2591E6EB9C9B4 /* CarouselGalleryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarouselGalleryView.swift; sourceTree = "<group>"; };
 		777FBDD900C11BC1DC552EA4 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
-		CC00DEPLOYER00REF01 /* ClaudeContextDeployer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeContextDeployer.swift; sourceTree = "<group>"; };
+		CC00DEPLOYER00REF01 /* CodexContextDeployer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexContextDeployer.swift; sourceTree = "<group>"; };
 		77E58812E3211C2E8431E836 /* APIKeyRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIKeyRowView.swift; sourceTree = "<group>"; };
 		77FAB789E27421C8BEF33844 /* HeadingOutlinePopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeadingOutlinePopover.swift; sourceTree = "<group>"; };
 		7856A1A21D831AAA86F15843 /* SourceURLsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceURLsView.swift; sourceTree = "<group>"; };
 		787D5724DBF91F8C70B1554F /* TerminalToolbarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalToolbarView.swift; sourceTree = "<group>"; };
 		795001E63F633250CA0F2106 /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = index.html; sourceTree = "<group>"; };
 		FF00FONTS000000REF01 /* fonts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = fonts; sourceTree = "<group>"; };
-		CC00CLAUDE0CONTEXT01 /* claude-context */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "claude-context"; sourceTree = "<group>"; };
+		CC00CODEX0CONTEXT01 /* codex-context */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "codex-context"; sourceTree = "<group>"; };
 		AAAA000000000000000ICON2 /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = AppIcon.icns; sourceTree = "<group>"; };
 		796E10463B7608295A3DE488 /* Raw2Draft.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Raw2Draft.entitlements; sourceTree = "<group>"; };
 		79E1A48B34D48249CC383B9D /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -254,7 +254,7 @@
 				8C9E9282F79C4DCA0CC1FB18 /* Assets.xcassets */,
 				795001E63F633250CA0F2106 /* index.html */,
 				FF00FONTS000000REF01 /* fonts */,
-				CC00CLAUDE0CONTEXT01 /* claude-context */,
+				CC00CODEX0CONTEXT01 /* codex-context */,
 				AAAA000000000000000ICON2 /* AppIcon.icns */,
 				5B2F4996E46AC782C642BB6E /* Info.plist */,
 				796E10463B7608295A3DE488 /* Raw2Draft.entitlements */,
@@ -319,7 +319,7 @@
 				FF00APPFONTS00REF01 /* AppFonts.swift */,
 				5973AD8C0ACADA01ADC1D680 /* ColorExtension.swift */,
 				777FBDD900C11BC1DC552EA4 /* Constants.swift */,
-				CC00DEPLOYER00REF01 /* ClaudeContextDeployer.swift */,
+				CC00DEPLOYER00REF01 /* CodexContextDeployer.swift */,
 				357D939EFB00E7A552B20709 /* MarkdownParser.swift */,
 				FBC8942ADDFEC7CE112CFDD9 /* PathSanitizer.swift */,
 				AA00ERRHDL00REF01 /* ErrorHandling.swift */,
@@ -465,7 +465,7 @@
 				5EF7AECF5D1DDD9DE8753F28 /* Assets.xcassets in Resources */,
 				92A64DD15E81C76D5402F8D5 /* index.html in Resources */,
 				FF00FONTS000000BLD01 /* fonts in Resources */,
-				CC00CLAUDE0CONTEXT02 /* claude-context in Resources */,
+				CC00CODEX0CONTEXT02 /* codex-context in Resources */,
 				AAAA000000000000000ICON1 /* AppIcon.icns in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -489,7 +489,7 @@
 			files = (
 				FF00APPFONTS00BLD01 /* AppFonts.swift in Sources */,
 				6A0DD70EB33A54580A00C64A /* APIKeyRowView.swift in Sources */,
-				CC00DEPLOYER00BLD01 /* ClaudeContextDeployer.swift in Sources */,
+				CC00DEPLOYER00BLD01 /* CodexContextDeployer.swift in Sources */,
 				0AD29DD2B803AA6D2869BB37 /* ActionBarView.swift in Sources */,
 				1353D8460749077BD356A72B /* AppDelegate.swift in Sources */,
 				D33E792C4BE187DAFDAC5FCA /* AppViewModel.swift in Sources */,

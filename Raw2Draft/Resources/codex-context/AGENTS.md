@@ -10,14 +10,14 @@ The file the user currently has open in the editor is written to `~/.raw2draft/a
 
 Skills and reference documents are managed separately from the app:
 
-- **Skills**: Agent skills are in the `skills/` directory (cloned from [agent-starter-skills](https://github.com/Isaac-Flath/agent-starter-skills) on first launch). These provide `/slash-command` workflows for content creation, transcription, social media, video editing, and more.
+- **Skills**: Agent skills are in the configured skills directory (cloned from [agent-starter-skills](https://github.com/Isaac-Flath/agent-starter-skills) on first launch). Raw2Draft loads Codex-native skills from direct `SKILL.md` directories and `.agents/skills` roots.
 - **References**: Writing style guides and reference docs are in the `wiki/` directory (cloned from [agent-starter-wiki](https://github.com/Isaac-Flath/agent-starter-wiki) on first launch).
 
 For a richer setup, install [agentkb](https://github.com/Isaac-Flath/agentkb) and configure your own skills and wiki repos. agentkb provides semantic search across your knowledge base, chat history, and code.
 
 ## Writing
 
-Before writing or editing any text content, invoke `/writing-style` first. If agentkb is available, search for writing guidance:
+Before writing or editing any text content, use the `$writing-style` skill first. If agentkb is available, search for writing guidance:
 
 ```bash
 agentkb search -s wiki "Zinsser writing style principles"

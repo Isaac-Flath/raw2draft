@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Action bar with quick-send buttons for Claude Code commands, grouped by workflow.
+/// Action bar with quick-send buttons for Codex skills, grouped by workflow.
 struct ActionBarView: View {
     let onCommand: (String) -> Void
 

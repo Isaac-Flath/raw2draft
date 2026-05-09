@@ -48,6 +48,7 @@ struct EditorPaneView: View {
             if file.isMarkdown {
                 MarkdownEditorWebView(
                     content: viewModel.editor.fileContent,
+                    contentRevision: viewModel.editor.contentRevision,
                     fontName: viewModel.editorFontName,
                     fontSize: viewModel.editorFontSize,
                     socialMode: socialMode,

@@ -41,7 +41,7 @@ struct TerminalToolbarView: View {
                     .foregroundColor(Color(hex: Constants.TerminalColors.foreground).opacity(0.9))
             }
             .buttonStyle(.plain)
-            .help("Restart Claude Code")
+            .help("Restart Codex")
 
             // Copy button
             Button {
