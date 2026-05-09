@@ -19,12 +19,26 @@ struct FileNode: Identifiable, Equatable {
         )
     }
 
+    /// Whether this is an HTML file that can be edited in rendered mode.
+    var isHTML: Bool {
+        guard !isDirectory else { return false }
+        return Constants.htmlExtensions.contains(
+            (name as NSString).pathExtension.lowercased()
+        )
+    }
+
+    /// Whether this file can be opened in Raw2Draft's rich WebView editor.
+    var isWebEditable: Bool {
+        isMarkdown || isHTML
+    }
+
     /// System image name for display.
     var systemImageName: String {
         if isDirectory {
             return isExpanded ? "folder.fill" : "folder"
         }
         if isMarkdown { return "doc.text" }
+        if isHTML { return "globe" }
         let ext = (name as NSString).pathExtension.lowercased()
         if Constants.imageExtensions.contains(ext) { return "photo" }
         if Constants.videoExtensions.contains(ext) { return "film" }
@@ -284,8 +298,8 @@ final class FileBrowserViewModel {
                 if node.isExpanded { updated.isExpanded = true }
                 return updated
             }
-            // Only filter markdown files; keep non-markdown files visible
-            guard node.isMarkdown else { return node }
+            // Only filter editable documents; keep assets visible.
+            guard node.isWebEditable else { return node }
             let attrs = try? fileManager.attributesOfItem(atPath: node.id.path)
             if let modified = attrs?[.modificationDate] as? Date, modified >= cutoff {
                 return node

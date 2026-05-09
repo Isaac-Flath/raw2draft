@@ -36,14 +36,23 @@ import { createPreviewPane, updatePreview, setPreviewVisible, syncPreviewScroll 
 import { createBridge } from "./bridge.js";
 import { resolveD2Render } from "./d2-renderer.js";
 import { programmaticContentSet } from "./transactions.js";
+import { createHtmlRenderEditor } from "./html-render-editor.js";
 
 window.d2Rendered = (requestId, result) => resolveD2Render(requestId, result);
 
 let view;
 let bridge;
+let documentMode = "markdown";
+let desiredPreviewVisible = false;
 const lineNumbersCompartment = new Compartment();
 
 function createEditor(parent) {
+  const container = parent.parentElement;
+  const htmlEditor = createHtmlRenderEditor({
+    onContentChanged: (content) => bridge?.notifyContentChanged(content),
+    onSave: () => bridge?.notifySave(),
+  });
+
   const state = EditorState.create({
     doc: "",
     extensions: [
@@ -92,13 +101,16 @@ function createEditor(parent) {
   });
 
   view = new EditorView({ state, parent });
-  bridge = createBridge(view);
+  bridge = createBridge(view, {
+    getDocumentMode: () => documentMode,
+    htmlEditor,
+  });
   wireMermaidThemeRefresh(view);
 
   // Add preview pane after editor
-  const container = parent.parentElement;
   if (container) {
     container.appendChild(createPreviewPane());
+    container.appendChild(htmlEditor.element);
   }
 
   // Sync preview scroll when editor scrolls
@@ -150,8 +162,26 @@ function createEditor(parent) {
 
   // Expose bridge globally for Swift -> JS calls
   window.editorBridge = bridge;
+  window.editorBridge.setDocumentMode = (mode) => {
+    documentMode = mode === "html" ? "html" : "markdown";
+    const htmlMode = documentMode === "html";
+    container?.classList.toggle("html-mode", htmlMode);
+    htmlEditor.setVisible(htmlMode);
+
+    if (htmlMode) {
+      setPreviewVisible(false, () => view.state.doc.toString());
+    } else {
+      setPreviewVisible(desiredPreviewVisible, () => view.state.doc.toString());
+    }
+  };
+
   window.editorBridge.setPreviewVisible = (visible) => {
-    setPreviewVisible(visible, () => view.state.doc.toString());
+    desiredPreviewVisible = visible;
+    if (documentMode === "markdown") {
+      setPreviewVisible(visible, () => view.state.doc.toString());
+    } else {
+      setPreviewVisible(false, () => view.state.doc.toString());
+    }
   };
 
   window.editorBridge.setLineNumbers = (show) => {

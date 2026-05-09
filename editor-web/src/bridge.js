@@ -19,35 +19,44 @@ function postToSwift(type, payload = {}) {
   }
 }
 
-export function createBridge(view) {
+export function createBridge(view, options = {}) {
+  function isHtmlMode() {
+    return options.getDocumentMode?.() === "html";
+  }
+
   return {
     // --- Swift -> JS ---
 
-    setContent(markdown) {
+    setContent(content) {
+      if (isHtmlMode() && options.htmlEditor) {
+        options.htmlEditor.setContent(content);
+        return;
+      }
+
       const oldContent = view.state.doc.toString();
-      if (oldContent === markdown) return;
+      if (oldContent === content) return;
 
       // Compute a minimal diff (common prefix + common suffix) so CodeMirror
       // can map the cursor through unchanged regions. A full replace would
       // reset the cursor to 0 and yank scroll to top/bottom.
       let prefix = 0;
-      const maxPre = Math.min(oldContent.length, markdown.length);
-      while (prefix < maxPre && oldContent.charCodeAt(prefix) === markdown.charCodeAt(prefix)) {
+      const maxPre = Math.min(oldContent.length, content.length);
+      while (prefix < maxPre && oldContent.charCodeAt(prefix) === content.charCodeAt(prefix)) {
         prefix++;
       }
       let suffix = 0;
-      const maxSuf = Math.min(oldContent.length - prefix, markdown.length - prefix);
+      const maxSuf = Math.min(oldContent.length - prefix, content.length - prefix);
       while (
         suffix < maxSuf &&
         oldContent.charCodeAt(oldContent.length - 1 - suffix) ===
-          markdown.charCodeAt(markdown.length - 1 - suffix)
+          content.charCodeAt(content.length - 1 - suffix)
       ) {
         suffix++;
       }
 
       const from = prefix;
       const to = oldContent.length - suffix;
-      const insert = markdown.slice(prefix, markdown.length - suffix);
+      const insert = content.slice(prefix, content.length - suffix);
 
       // Preserve scroll position across the transaction — CM maps selections
       // through changes, but large rewrites can still shift the viewport.
@@ -60,6 +69,7 @@ export function createBridge(view) {
     },
 
     getContent() {
+      if (isHtmlMode() && options.htmlEditor) return options.htmlEditor.getContent();
       return view.state.doc.toString();
     },
 
@@ -79,6 +89,7 @@ export function createBridge(view) {
 
     setBaseDir(dir) {
       setAssetBaseDir(dir);
+      options.htmlEditor?.setBaseDir(dir);
     },
 
     setFont(name, size) {
@@ -98,6 +109,10 @@ export function createBridge(view) {
     },
 
     focus() {
+      if (isHtmlMode() && options.htmlEditor) {
+        options.htmlEditor.focus();
+        return;
+      }
       view.focus();
     },
 

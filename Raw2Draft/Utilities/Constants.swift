@@ -110,6 +110,7 @@ enum Constants {
     static let videoExtensions: Set<String> = ["mp4", "mov", "webm"]
     static let imageExtensions: Set<String> = ["png", "jpg", "jpeg", "gif", "webp"]
     static let markdownExtensions: Set<String> = ["md", "mdx", "markdown"]
+    static let htmlExtensions: Set<String> = ["html", "htm"]
 
     // MARK: - IPC
     /// Temp file used by the `draft` CLI to pass a path to the running app.

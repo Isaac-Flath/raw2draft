@@ -605,7 +605,8 @@ private struct PostFileRow: View {
     private var iconName: String {
         if isDirectory { return "folder" }
         let ext = fileURL.pathExtension.lowercased()
-        if ["md", "markdown", "qmd"].contains(ext) { return "doc.text" }
+        if Constants.markdownExtensions.contains(ext) { return "doc.text" }
+        if Constants.htmlExtensions.contains(ext) { return "globe" }
         if ["png", "jpg", "jpeg", "gif", "webp", "svg"].contains(ext) { return "photo" }
         if ["mp4", "mov", "mkv", "webm"].contains(ext) { return "film" }
         return "doc"

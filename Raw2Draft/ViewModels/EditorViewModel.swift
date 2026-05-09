@@ -85,13 +85,13 @@ final class EditorViewModel: ErrorHandling {
             files = []
         }
 
-        // Restore last active file or auto-select first markdown
+        // Restore last active file or auto-select the first rich-editable file.
         let lastFile = UserDefaults.standard.string(forKey: UserDefaultsKey.lastFile(for: projectId))
         if let lastFile, files.contains(where: { $0.path == lastFile }) {
             activeFile = lastFile
             loadFileContent()
-        } else if let firstMarkdown = files.first(where: { $0.isMarkdown }) {
-            activeFile = firstMarkdown.path
+        } else if let firstEditable = files.first(where: { $0.isWebEditable }) {
+            activeFile = firstEditable.path
             loadFileContent()
         } else if let firstFile = files.first {
             activeFile = firstFile.path

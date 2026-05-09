@@ -262,7 +262,7 @@ private struct FileNodeRow: View {
         Button {
             if node.isDirectory {
                 fileBrowser.toggleExpanded(node)
-            } else if node.isMarkdown {
+            } else if node.isWebEditable {
                 onOpenFile(node.id)
             }
             fileBrowser.selectedNodeId = node.id
@@ -271,7 +271,7 @@ private struct FileNodeRow: View {
         }
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
-        .opacity(node.isMarkdown || node.isDirectory ? 1.0 : 0.6)
+        .opacity(node.isWebEditable || node.isDirectory ? 1.0 : 0.6)
         .contextMenu { contextMenuItems }
     }
 
@@ -322,13 +322,13 @@ private struct FileNodeRow: View {
 
             Image(systemName: node.systemImageName)
                 .font(.system(size: 11))
-                .foregroundStyle(node.isMarkdown ? .primary : .secondary)
+                .foregroundStyle(node.isWebEditable ? .primary : .secondary)
                 .frame(width: 16)
 
             Text(displayName)
                 .font(.system(size: 12))
                 .lineLimit(1)
-                .foregroundStyle(node.isMarkdown || node.isDirectory ? .primary : .secondary)
+                .foregroundStyle(node.isWebEditable || node.isDirectory ? .primary : .secondary)
 
             Spacer()
         }

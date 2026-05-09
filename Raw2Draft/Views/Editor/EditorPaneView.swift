@@ -11,6 +11,10 @@ struct EditorPaneView: View {
     @State private var socialMode = false
     @AppStorage("showPreview") private var showPreview = false
 
+    private var activeFileIsMarkdown: Bool {
+        viewModel.editor.activeProjectFile?.isMarkdown == true
+    }
+
     private var hasContent: Bool {
         viewModel.editor.activeFile != nil
     }
@@ -45,10 +49,11 @@ struct EditorPaneView: View {
     @ViewBuilder
     private var editorSurface: some View {
         if let file = viewModel.editor.activeProjectFile {
-            if file.isMarkdown {
+            if file.isWebEditable {
                 MarkdownEditorWebView(
                     content: viewModel.editor.fileContent,
                     contentRevision: viewModel.editor.contentRevision,
+                    documentMode: file.isHTML ? .html : .markdown,
                     fontName: viewModel.editorFontName,
                     fontSize: viewModel.editorFontSize,
                     socialMode: socialMode,
@@ -157,7 +162,7 @@ struct EditorPaneView: View {
 
             // Social mode toggle (Content Studio only)
             if viewModel.workspace.isContentStudio,
-               viewModel.editor.activeProjectFile?.isMarkdown == true {
+               activeFileIsMarkdown {
                 Button {
                     socialMode.toggle()
                 } label: {
@@ -171,7 +176,7 @@ struct EditorPaneView: View {
             }
 
             // Line numbers toggle
-            if viewModel.editor.activeProjectFile?.isMarkdown == true {
+            if activeFileIsMarkdown {
                 Button {
                     showLineNumbers.toggle()
                 } label: {
@@ -193,7 +198,7 @@ struct EditorPaneView: View {
                 }
                 .disabled(!viewModel.editor.dirty)
 
-                if viewModel.editor.activeProjectFile?.isMarkdown == true {
+                if activeFileIsMarkdown {
                     Divider()
 
                     Button {

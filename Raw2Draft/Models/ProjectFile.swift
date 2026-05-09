@@ -25,6 +25,7 @@ enum FileType: Equatable {
     case video
     case image
     case markdown
+    case html
     case other
 }
 
@@ -45,16 +46,20 @@ struct ProjectFile: Identifiable, Codable, Equatable {
         if Constants.videoExtensions.contains(fileExtension) { return .video }
         if Constants.imageExtensions.contains(fileExtension) { return .image }
         if Constants.markdownExtensions.contains(fileExtension) { return .markdown }
+        if Constants.htmlExtensions.contains(fileExtension) { return .html }
         return .other
     }
 
     var isVideo: Bool { fileType == .video }
     var isImage: Bool { fileType == .image }
     var isMarkdown: Bool { fileType == .markdown }
+    var isHTML: Bool { fileType == .html }
+    var isWebEditable: Bool { fileType == .markdown || fileType == .html }
 
     var systemImageName: String {
         switch fileType {
         case .markdown: return "doc.text"
+        case .html: return "globe"
         case .image: return "photo"
         case .video: return "film"
         case .other: return "doc"

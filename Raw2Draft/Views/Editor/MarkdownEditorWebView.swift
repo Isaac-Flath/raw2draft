@@ -4,11 +4,17 @@ import os
 
 private let logger = Logger(subsystem: "com.raw2draft", category: "EditorWebView")
 
+enum EditorDocumentMode: String {
+    case markdown
+    case html
+}
+
 /// WKWebView-based markdown editor powered by CodeMirror 6.
 /// Replaces the NSTextView-based MarkdownEditorView.
 struct MarkdownEditorWebView: NSViewRepresentable {
     let content: String
     let contentRevision: Int
+    let documentMode: EditorDocumentMode
     let fontName: String
     let fontSize: CGFloat
     let socialMode: Bool
@@ -70,6 +76,20 @@ struct MarkdownEditorWebView: NSViewRepresentable {
 
         logger.info("updateNSView: isReady=\(coordinator.isReady) contentLen=\(content.count) revision=\(contentRevision) lastSentLen=\(coordinator.lastSentContent.count) lastRevision=\(coordinator.lastContentRevision) match=\(content == coordinator.lastSentContent)")
 
+        // Switch the WebView's editing surface before sending content so HTML
+        // files render in the iframe editor instead of the CodeMirror document.
+        if coordinator.isReady && documentMode != coordinator.lastDocumentMode {
+            coordinator.lastDocumentMode = documentMode
+            coordinator.sendDocumentMode(documentMode, to: webView)
+        }
+
+        // Update base directory before content so HTML iframes and markdown
+        // previews resolve relative assets correctly on their first render.
+        if coordinator.isReady && baseDirectory?.path != coordinator.lastBaseDirectory?.path {
+            coordinator.lastBaseDirectory = baseDirectory
+            coordinator.sendBaseDirectory(baseDirectory, to: webView)
+        }
+
         // Update content if it changed externally (file switch, etc.)
         if coordinator.isReady
             && (content != coordinator.lastSentContent || contentRevision != coordinator.lastContentRevision) {
@@ -102,12 +122,6 @@ struct MarkdownEditorWebView: NSViewRepresentable {
         if coordinator.isReady && showLineNumbers != coordinator.lastShowLineNumbers {
             coordinator.lastShowLineNumbers = showLineNumbers
             webView.evaluateJavaScript("window.editorBridge.setLineNumbers(\(showLineNumbers))")
-        }
-
-        // Update base directory so the editor can resolve relative asset paths.
-        if coordinator.isReady && baseDirectory?.path != coordinator.lastBaseDirectory?.path {
-            coordinator.lastBaseDirectory = baseDirectory
-            coordinator.sendBaseDirectory(baseDirectory, to: webView)
         }
 
         // Scroll to offset (e.g., from heading outline)
@@ -144,12 +158,17 @@ struct MarkdownEditorWebView: NSViewRepresentable {
         var lastShowPreview = false
         var lastShowLineNumbers = false
         var lastBaseDirectory: URL?
+        var lastDocumentMode: EditorDocumentMode = .markdown
 
         init(parent: MarkdownEditorWebView) {
             self.parent = parent
             self.pendingContent = parent.content
             self.pendingContentRevision = parent.contentRevision
             super.init()
+        }
+
+        func sendDocumentMode(_ mode: EditorDocumentMode, to webView: WKWebView) {
+            webView.evaluateJavaScript("window.editorBridge.setDocumentMode('\(mode.rawValue)')")
         }
 
         /// Tell the JavaScript editor about the active file's absolute
@@ -196,6 +215,10 @@ struct MarkdownEditorWebView: NSViewRepresentable {
                 lastContentRevision = revision
                 logger.info("ready: sending pendingContent len=\(content.count) revision=\(revision) first80=\(String(content.prefix(80)))")
                 if let webView {
+                    lastDocumentMode = parent.documentMode
+                    sendDocumentMode(parent.documentMode, to: webView)
+                    lastBaseDirectory = parent.baseDirectory
+                    sendBaseDirectory(parent.baseDirectory, to: webView)
                     sendContent(content, to: webView)
                     // Verify content was actually set by querying the editor
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -228,12 +251,6 @@ struct MarkdownEditorWebView: NSViewRepresentable {
                 // Set initial line numbers state
                 lastShowLineNumbers = parent.showLineNumbers
                 webView?.evaluateJavaScript("window.editorBridge.setLineNumbers(\(parent.showLineNumbers))")
-
-                // Set initial base directory
-                lastBaseDirectory = parent.baseDirectory
-                if let webView {
-                    sendBaseDirectory(parent.baseDirectory, to: webView)
-                }
 
             case "contentChanged":
                 if let content = body["content"] as? String {
@@ -535,6 +552,12 @@ final class AssetSchemeHandler: NSObject, WKURLSchemeHandler {
 
     private func mimeType(forExtension ext: String) -> String {
         switch ext.lowercased() {
+        case "html", "htm": return "text/html; charset=utf-8"
+        case "css": return "text/css; charset=utf-8"
+        case "js", "mjs": return "text/javascript; charset=utf-8"
+        case "json", "map": return "application/json; charset=utf-8"
+        case "txt": return "text/plain; charset=utf-8"
+        case "xml": return "application/xml; charset=utf-8"
         case "png": return "image/png"
         case "jpg", "jpeg": return "image/jpeg"
         case "gif": return "image/gif"
@@ -547,6 +570,11 @@ final class AssetSchemeHandler: NSObject, WKURLSchemeHandler {
         case "mp4": return "video/mp4"
         case "webm": return "video/webm"
         case "mov": return "video/quicktime"
+        case "woff": return "font/woff"
+        case "woff2": return "font/woff2"
+        case "ttf": return "font/ttf"
+        case "otf": return "font/otf"
+        case "eot": return "application/vnd.ms-fontobject"
         default: return "application/octet-stream"
         }
     }
